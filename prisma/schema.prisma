@@ -40,19 +40,22 @@ model Repository {
 }
 
 model PullRequest {
-  id           String     @id @default(cuid())
-  githubPrId   Int
-  repoId       String
-  title        String
-  authorLogin  String
-  state        String
-  createdAt    DateTime
-  mergedAt     DateTime?
-  closedAt     DateTime?
-  additions    Int        @default(0)
-  deletions    Int        @default(0)
-  cycleTimeHrs Float?
-  repo         Repository @relation(fields: [repoId], references: [id])
+  id            String    @id @default(cuid())
+  githubPrId    Int
+  repoId        String
+  title         String
+  authorLogin   String
+  state         String
+  createdAt     DateTime
+  mergedAt      DateTime?
+  closedAt      DateTime?
+  additions     Int       @default(0)
+  deletions     Int       @default(0)
+  cycleTimeHrs  Float?
+
+  repo          Repository @relation(fields: [repoId], references: [id])
+
+  @@unique([repoId, githubPrId])
 }
 
 model Deployment {

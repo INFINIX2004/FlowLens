@@ -2,6 +2,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getGithubRepos } from '@/lib/github'
+import { getDORAMetrics } from '@/lib/metrics'
 
 export default async function DashboardPage() {
   const user = await currentUser()
@@ -11,12 +12,17 @@ export default async function DashboardPage() {
     where: { clerkOrgId: user.id },
   })
 
-  console.log('user.id:', user.id)
-  console.log('org found:', org)
+  const [repos, metrics] = await Promise.all([
+    org?.githubAccessToken ? getGithubRepos(org.githubAccessToken) : [],
+    org ? getDORAMetrics(org.id) : null,
+  ])
 
-  const repos = org?.githubAccessToken
-    ? await getGithubRepos(org.githubAccessToken)
-    : []
+  const doraCards = [
+    { label: 'Deployment Frequency', value: metrics?.deployFrequency ?? '—', unit: 'per week' },
+    { label: 'Lead Time', value: metrics?.leadTime ?? '—', unit: 'hours' },
+    { label: 'Change Failure Rate', value: metrics?.changeFailureRate ?? '—', unit: '%' },
+    { label: 'MTTR', value: metrics?.mttr ?? '—', unit: 'hours' },
+  ]
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -32,13 +38,14 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        <form action="/api/github/sync" method="POST" className="mb-6">
+          <button type="submit" className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+            ↻ Sync GitHub Data
+          </button>
+        </form>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Deployment Frequency', value: '—', unit: 'per week' },
-            { label: 'Lead Time', value: '—', unit: 'hours' },
-            { label: 'Change Failure Rate', value: '—', unit: '%' },
-            { label: 'MTTR', value: '—', unit: 'hours' },
-          ].map((m) => (
+          {doraCards.map((m) => (
             <div key={m.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
               <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">{m.label}</p>
               <p className="text-4xl font-bold">{m.value}</p>

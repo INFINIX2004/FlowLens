@@ -7,3 +7,16 @@ export async function getGithubRepos(accessToken: string) {
   })
   return res.json()
 }
+
+export async function getPullRequests(accessToken: string, fullName: string) {
+  const res = await fetch(
+    `https://api.github.com/repos/${fullName}/pulls?state=all&per_page=100&sort=updated`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+      },
+    }
+  )
+  return res.json()
+}
