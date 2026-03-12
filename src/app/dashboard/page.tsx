@@ -43,9 +43,11 @@ export default async function DashboardPage() {
           <p className="text-gray-400 mb-6 max-w-md mx-auto">
             Link your repos to start seeing DORA metrics, PR cycle times, and team insights.
           </p>
+          <a href="/api/github/connect">
           <button className="bg-white text-black font-semibold px-6 py-2.5 rounded-lg hover:bg-gray-200 transition">
             Connect GitHub
           </button>
+          </a>
         </div>
 
       </div>

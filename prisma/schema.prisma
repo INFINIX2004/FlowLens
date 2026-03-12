@@ -1,68 +1,66 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  clerkOrgId String  @unique
-  name      String
-  createdAt DateTime @default(now())
-  
-  repos     Repository[]
-  members   Member[]
+  id                String       @id @default(cuid())
+  clerkOrgId        String       @unique
+  name              String
+  createdAt         DateTime     @default(now())
+  githubAccessToken String?
+  githubLogin       String?
+  members           Member[]
+  repos             Repository[]
 }
 
 model Member {
-  id        String   @id @default(cuid())
+  id          String       @id @default(cuid())
   clerkUserId String
-  orgId     String
-  role      String   @default("member")
-  createdAt DateTime @default(now())
-  
-  org       Organization @relation(fields: [orgId], references: [id])
+  orgId       String
+  role        String       @default("member")
+  createdAt   DateTime     @default(now())
+  org         Organization @relation(fields: [orgId], references: [id])
 }
 
 model Repository {
-  id        String   @id @default(cuid())
-  githubId  Int      @unique
-  name      String
-  fullName  String
-  orgId     String
-  createdAt DateTime @default(now())
-  
-  org       Organization @relation(fields: [orgId], references: [id])
-  pullRequests PullRequest[]
+  id           String        @id @default(cuid())
+  githubId     Int           @unique
+  name         String
+  fullName     String
+  orgId        String
+  createdAt    DateTime      @default(now())
   deployments  Deployment[]
+  pullRequests PullRequest[]
+  org          Organization  @relation(fields: [orgId], references: [id])
 }
 
 model PullRequest {
-  id            String   @id @default(cuid())
-  githubPrId    Int
-  repoId        String
-  title         String
-  authorLogin   String
-  state         String
-  createdAt     DateTime
-  mergedAt      DateTime?
-  closedAt      DateTime?
-  additions     Int      @default(0)
-  deletions     Int      @default(0)
-  cycleTimeHrs  Float?
-  
-  repo          Repository @relation(fields: [repoId], references: [id])
+  id           String     @id @default(cuid())
+  githubPrId   Int
+  repoId       String
+  title        String
+  authorLogin  String
+  state        String
+  createdAt    DateTime
+  mergedAt     DateTime?
+  closedAt     DateTime?
+  additions    Int        @default(0)
+  deletions    Int        @default(0)
+  cycleTimeHrs Float?
+  repo         Repository @relation(fields: [repoId], references: [id])
 }
 
 model Deployment {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   repoId      String
   environment String
   status      String
   deployedAt  DateTime
-  createdAt   DateTime @default(now())
-  
+  createdAt   DateTime   @default(now())
   repo        Repository @relation(fields: [repoId], references: [id])
 }
