@@ -59,11 +59,15 @@ model PullRequest {
 }
 
 model Deployment {
-  id          String     @id @default(cuid())
-  repoId      String
-  environment String
-  status      String
-  deployedAt  DateTime
-  createdAt   DateTime   @default(now())
-  repo        Repository @relation(fields: [repoId], references: [id])
+  id              String   @id @default(cuid())
+  repoId          String
+  githubReleaseId Int
+  environment     String
+  status          String
+  deployedAt      DateTime
+  createdAt       DateTime @default(now())
+
+  repo            Repository @relation(fields: [repoId], references: [id])
+
+  @@unique([repoId, githubReleaseId])
 }
