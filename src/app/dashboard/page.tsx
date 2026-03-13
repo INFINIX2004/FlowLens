@@ -43,7 +43,10 @@ export default async function DashboardPage() {
             ↻ Sync GitHub Data
           </button>
         </form>
-
+        <a href="/dashboard/prs" className="text-sm bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition">
+        PR Analytics →
+        </a>
+        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {doraCards.map((m) => (
             <div key={m.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
