@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getGithubRepos } from '@/lib/github'
 import { getDORAMetrics } from '@/lib/metrics'
+import SyncButton from '@/components/sync-button'
 
 export default async function DashboardPage() {
   const user = await currentUser()
@@ -33,11 +34,7 @@ export default async function DashboardPage() {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        <form action="/api/github/sync" method="POST">
-          <button className="flex items-center gap-2 text-xs bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-gray-300 px-3 py-2 rounded-md transition">
-            <span>↻</span> Sync
-          </button>
-        </form>
+        <SyncButton />
       </div>
 
       {/* DORA Cards */}
