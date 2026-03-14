@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import Link from 'next/link'
 
 export default function ChartsPage() {
   const [data, setData] = useState<any>(null)
@@ -12,91 +11,95 @@ export default function ChartsPage() {
   }, [])
 
   if (!data) return (
-    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-      <p className="text-gray-400">Loading charts...</p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-xl font-semibold tracking-tight">Trends</h1>
+        <p className="text-gray-500 text-sm mt-0.5">Loading...</p>
+      </div>
     </div>
   )
 
+  const tooltipStyle = {
+    contentStyle: { backgroundColor: '#0D1117', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', fontSize: '12px' },
+    labelStyle: { color: '#6b7280' },
+  }
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-xl font-semibold tracking-tight">Trends</h1>
+        <p className="text-gray-500 text-sm mt-0.5">Metrics over time</p>
+      </div>
 
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/dashboard" className="text-gray-400 hover:text-white transition">← Back</Link>
-          <h1 className="text-2xl font-bold">Trends & Charts</h1>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          {/* Lead Time Trend */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <h2 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Lead Time Trend</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={data.leadTimeTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="date" stroke="#6b7280" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#6b7280" tick={{ fontSize: 11 }} unit="h" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px' }}
-                  labelStyle={{ color: '#9ca3af' }}
-                />
-                <Line type="monotone" dataKey="hours" stroke="#3b82f6" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+      <div className="grid grid-cols-2 gap-4">
+        {[
+          {
+            title: 'Lead Time Trend',
+            subtitle: 'Hours from commit to merge',
+            chart: (
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={data.leadTimeTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="date" stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} />
+                  <YAxis stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} unit="h" />
+                  <Tooltip {...tooltipStyle} />
+                  <Line type="monotone" dataKey="hours" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            )
+          },
+          {
+            title: 'Deployments per Week',
+            subtitle: 'Release cadence over time',
+            chart: (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data.deployFrequency}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="week" stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} />
+                  <YAxis stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} />
+                  <Tooltip {...tooltipStyle} />
+                  <Bar dataKey="deployments" fill="#6366f1" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )
+          },
+          {
+            title: 'PR Cycle Time Distribution',
+            subtitle: 'Time buckets across all PRs',
+            chart: (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={data.cycleTimeDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="range" stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} />
+                  <YAxis stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} />
+                  <Tooltip {...tooltipStyle} />
+                  <Bar dataKey="count" fill="#10b981" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )
+          },
+          {
+            title: 'Change Failure Rate',
+            subtitle: 'Failed deploys % per week',
+            chart: (
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={data.failureRateTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="week" stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} />
+                  <YAxis stroke="#374151" tick={{ fontSize: 10, fill: '#4b5563' }} unit="%" />
+                  <Tooltip {...tooltipStyle} />
+                  <Line type="monotone" dataKey="rate" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            )
+          },
+        ].map((card) => (
+          <div key={card.title} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6 hover:border-white/[0.10] transition-all">
+            <p className="text-sm font-medium text-gray-200 mb-0.5">{card.title}</p>
+            <p className="text-xs text-gray-600 mb-5">{card.subtitle}</p>
+            {card.chart}
           </div>
-
-          {/* Deployment Frequency */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <h2 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Deployments per Week</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.deployFrequency}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="week" stroke="#6b7280" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#6b7280" tick={{ fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px' }}
-                  labelStyle={{ color: '#9ca3af' }}
-                />
-                <Bar dataKey="deployments" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* PR Cycle Time Distribution */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <h2 className="text-sm uppercase tracking-wider text-gray-400 mb-4">PR Cycle Time Distribution</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.cycleTimeDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="range" stroke="#6b7280" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#6b7280" tick={{ fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px' }}
-                  labelStyle={{ color: '#9ca3af' }}
-                />
-                <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Change Failure Rate Trend */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <h2 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Change Failure Rate Trend</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={data.failureRateTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="week" stroke="#6b7280" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#6b7280" tick={{ fontSize: 11 }} unit="%" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px' }}
-                  labelStyle={{ color: '#9ca3af' }}
-                />
-                <Line type="monotone" dataKey="rate" stroke="#f59e0b" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-        </div>
+        ))}
       </div>
     </div>
   )
