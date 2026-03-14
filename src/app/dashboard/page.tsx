@@ -10,6 +10,43 @@ export default async function DashboardPage() {
   if (!user) redirect('/sign-in')
 
   const org = await prisma.organization.findUnique({ where: { clerkOrgId: user.id } })
+// No GitHub connected yet → show onboarding
+if (!org?.githubAccessToken) {
+  return (
+    <div className="p-8 flex items-center justify-center min-h-screen">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">⚡</div>
+          <h1 className="text-xl font-semibold mb-2">Welcome to FlowLens</h1>
+          <p className="text-gray-500 text-sm">Let's get your engineering metrics set up. It takes less than 2 minutes.</p>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            { step: '01', title: 'Connect GitHub', desc: 'Link your repos to start pulling PR and deployment data', done: false, action: { label: 'Connect GitHub', href: '/api/github/connect' } },
+            { step: '02', title: 'Sync your data', desc: 'Pull in your PRs, commits and releases', done: false, action: null },
+            { step: '03', title: 'View your metrics', desc: 'See DORA metrics, PR cycle times and AI insights', done: false, action: null },
+          ].map((s) => (
+            <div key={s.step} className={`border rounded-xl p-5 flex items-start gap-4 ${s.done ? 'border-emerald-500/20 bg-emerald-500/[0.03]' : 'border-white/[0.06] bg-white/[0.02]'}`}>
+              <span className="text-xs font-mono text-gray-600 mt-0.5">{s.step}</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium mb-0.5">{s.title}</p>
+                <p className="text-xs text-gray-500">{s.desc}</p>
+              </div>
+              {s.action && (
+                <a href={s.action.href}>
+                  <button className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md transition">
+                    {s.action.label}
+                  </button>
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
   const [repos, metrics] = await Promise.all([
     org?.githubAccessToken ? getGithubRepos(org.githubAccessToken) : [],

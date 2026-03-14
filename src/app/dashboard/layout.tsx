@@ -23,8 +23,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
         {/* Bottom */}
         <div className="px-4 py-4 border-t border-white/[0.06] flex items-center justify-between">
-          <div className="text-xs text-gray-600 truncate">{user.firstName ?? user.username}</div>
-        </div>
+         <div className="text-xs text-gray-600 truncate">{user.firstName ?? user.username}</div>
+        <UserButton signInUrl="/sign-in" />        </div>
       </aside>
 
       <main className="flex-1 ml-56 min-h-screen">
