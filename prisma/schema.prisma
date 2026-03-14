@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -11,11 +10,11 @@ model Organization {
   id                String       @id @default(cuid())
   clerkOrgId        String       @unique
   name              String
-  createdAt         DateTime     @default(now())
   githubAccessToken String?
   githubLogin       String?
-  members           Member[]
+  createdAt         DateTime     @default(now())
   repos             Repository[]
+  members           Member[]
 }
 
 model Member {
@@ -33,41 +32,71 @@ model Repository {
   name         String
   fullName     String
   orgId        String
+  lastSyncedAt DateTime?
   createdAt    DateTime      @default(now())
-  deployments  Deployment[]
-  pullRequests PullRequest[]
   org          Organization  @relation(fields: [orgId], references: [id])
+  pullRequests PullRequest[]
+  deployments  Deployment[]
 }
 
 model PullRequest {
-  id            String    @id @default(cuid())
-  githubPrId    Int
-  repoId        String
-  title         String
-  authorLogin   String
-  state         String
-  createdAt     DateTime
-  mergedAt      DateTime?
-  closedAt      DateTime?
-  additions     Int       @default(0)
-  deletions     Int       @default(0)
-  cycleTimeHrs  Float?
-
-  repo          Repository @relation(fields: [repoId], references: [id])
+  id             String              @id @default(cuid())
+  githubPrId     Int
+  repoId         String
+  title          String
+  authorLogin    String
+  state          String
+  createdAt      DateTime
+  firstReviewAt  DateTime?
+  approvedAt     DateTime?
+  mergedAt       DateTime?
+  closedAt       DateTime?
+  additions      Int                 @default(0)
+  deletions      Int                 @default(0)
+  changedFiles   Int                 @default(0)
+  commitCount    Int                 @default(0)
+  reviewCount    Int                 @default(0)
+  cycleTimeHrs   Float?
+  codingTimeHrs  Float?
+  reviewWaitHrs  Float?
+  reviewTimeHrs  Float?
+  mergeDelayHrs  Float?
+  repo           Repository          @relation(fields: [repoId], references: [id])
+  reviews        PullRequestReview[]
 
   @@unique([repoId, githubPrId])
 }
 
+model PullRequestReview {
+  id            String      @id @default(cuid())
+  prId          String
+  reviewerLogin String
+  state         String
+  submittedAt   DateTime
+  pr            PullRequest @relation(fields: [prId], references: [id])
+
+  @@unique([prId, reviewerLogin, submittedAt])
+}
+
 model Deployment {
-  id              String   @id @default(cuid())
+  id              String     @id @default(cuid())
   repoId          String
   githubReleaseId Int
   environment     String
   status          String
   deployedAt      DateTime
-  createdAt       DateTime @default(now())
-
+  createdAt       DateTime   @default(now())
   repo            Repository @relation(fields: [repoId], references: [id])
 
   @@unique([repoId, githubReleaseId])
+}
+
+model SyncJob {
+  id        String    @id @default(cuid())
+  orgId     String
+  status    String    @default("pending")
+  startedAt DateTime?
+  doneAt    DateTime?
+  error     String?
+  createdAt DateTime  @default(now())
 }
