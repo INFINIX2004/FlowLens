@@ -1,4 +1,5 @@
 import { Queue, Worker, Job } from 'bullmq'
+import { decrypt } from './encryption'
 
 const connection = {
   url: process.env.REDIS_URL!,
@@ -19,13 +20,14 @@ export function createSyncWorker() {
 
       const org = await prisma.organization.findUnique({ where: { id: orgId } })
       if (!org?.githubAccessToken) throw new Error('No GitHub token')
+      const accessToken = decrypt(org.githubAccessToken)
 
       await prisma.syncJob.updateMany({
         where: { orgId, status: 'pending' },
         data: { status: 'running', startedAt: new Date() },
       })
 
-      const repos = await getGithubRepos(org.githubAccessToken)
+      const repos = await getGithubRepos(accessToken)
       let totalPRs = 0
       let totalDeploys = 0
 
@@ -55,11 +57,11 @@ export function createSyncWorker() {
         })
 
         // Only fetch PRs updated since last sync
-        const prs = await getPullRequests(org.githubAccessToken, repo.full_name, lastSyncedAt)
+        const prs = await getPullRequests(accessToken, repo.full_name, lastSyncedAt)
         if (Array.isArray(prs)) {
           for (const pr of prs.slice(0, 30)) {
-            const detail = await getPRDetail(org.githubAccessToken, repo.full_name, pr.number)
-            const reviews = await getPRReviews(org.githubAccessToken, repo.full_name, pr.number)
+            const detail = await getPRDetail(accessToken, repo.full_name, pr.number)
+            const reviews = await getPRReviews(accessToken, repo.full_name, pr.number)
 
             const createdAt = new Date(pr.created_at)
             const mergedAt = pr.merged_at ? new Date(pr.merged_at) : null
@@ -96,7 +98,7 @@ export function createSyncWorker() {
           }
         }
 
-        const releases = await getDeployments(org.githubAccessToken, repo.full_name)
+        const releases = await getDeployments(accessToken, repo.full_name)
         if (Array.isArray(releases)) {
           for (const release of releases) {
             await prisma.deployment.upsert({
@@ -108,7 +110,7 @@ export function createSyncWorker() {
           }
         }
 
-        const runs = await getWorkflowRuns(org.githubAccessToken, repo.full_name, lastSyncedAt)
+        const runs = await getWorkflowRuns(accessToken, repo.full_name, lastSyncedAt)
         if (runs?.workflow_runs && Array.isArray(runs.workflow_runs)) {
           for (const run of runs.workflow_runs.slice(0, 20)) {
             if (run.name?.toLowerCase().includes('deploy') || run.name?.toLowerCase().includes('release')) {

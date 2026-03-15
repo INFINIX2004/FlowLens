@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getGithubRepos } from '@/lib/github'
 import { getDORAMetrics, getPerformanceLevel, BENCHMARKS } from '@/lib/metrics'
+import { decrypt } from '@/lib/encryption'
 import SyncButton from '@/components/sync-button'
 
 export default async function DashboardPage() {
@@ -11,6 +12,7 @@ export default async function DashboardPage() {
 
   const org = await prisma.organization.findUnique({ where: { clerkOrgId: user.id } })
 
+  // No GitHub connected → show onboarding
   if (!org?.githubAccessToken) {
     return (
       <div className="p-8 flex items-center justify-center min-h-screen">
@@ -47,44 +49,18 @@ export default async function DashboardPage() {
     )
   }
 
+  const decryptedToken = decrypt(org.githubAccessToken)
+
   const [repos, metrics] = await Promise.all([
-    getGithubRepos(org.githubAccessToken),
+    getGithubRepos(decryptedToken),
     getDORAMetrics(org.id),
   ])
 
   const doraCards = [
-    {
-      key: 'deployFrequency',
-      label: 'Deployment Freq',
-      value: metrics.deployFrequency,
-      unit: '/ week',
-      benchmark: BENCHMARKS.deployFrequency,
-      higherIsBetter: true,
-    },
-    {
-      key: 'leadTime',
-      label: 'Lead Time',
-      value: metrics.leadTime,
-      unit: 'hrs',
-      benchmark: BENCHMARKS.leadTime,
-      higherIsBetter: false,
-    },
-    {
-      key: 'changeFailureRate',
-      label: 'Failure Rate',
-      value: metrics.changeFailureRate,
-      unit: '%',
-      benchmark: BENCHMARKS.changeFailureRate,
-      higherIsBetter: false,
-    },
-    {
-      key: 'mttr',
-      label: 'MTTR',
-      value: metrics.mttr,
-      unit: 'hrs',
-      benchmark: BENCHMARKS.mttr,
-      higherIsBetter: false,
-    },
+    { key: 'deployFrequency', label: 'Deployment Freq', value: metrics.deployFrequency, unit: '/ week', benchmark: BENCHMARKS.deployFrequency, higherIsBetter: true },
+    { key: 'leadTime', label: 'Lead Time', value: metrics.leadTime, unit: 'hrs', benchmark: BENCHMARKS.leadTime, higherIsBetter: false },
+    { key: 'changeFailureRate', label: 'Failure Rate', value: metrics.changeFailureRate, unit: '%', benchmark: BENCHMARKS.changeFailureRate, higherIsBetter: false },
+    { key: 'mttr', label: 'MTTR', value: metrics.mttr, unit: 'hrs', benchmark: BENCHMARKS.mttr, higherIsBetter: false },
   ]
 
   const levelColors = {
@@ -103,8 +79,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8">
-
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Overview</h1>
@@ -115,7 +89,6 @@ export default async function DashboardPage() {
         <SyncButton />
       </div>
 
-      {/* DORA Cards */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {doraCards.map((m) => {
           const hasValue = m.value !== null
@@ -134,7 +107,6 @@ export default async function DashboardPage() {
                 {hasValue ? m.value : <span className="text-gray-700">—</span>}
               </p>
               <p className="text-xs text-gray-600 mb-3">{hasValue ? m.unit : 'no data yet'}</p>
-              {/* Benchmark bar */}
               {hasValue && (
                 <div className="mt-2">
                   <div className="flex justify-between text-xs text-gray-700 mb-1">
@@ -159,7 +131,6 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         {[
           { label: 'Total PRs tracked', value: metrics.totalPRs },
@@ -173,7 +144,6 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* Repos */}
       <div>
         <h2 className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">Repositories</h2>
         <div className="grid grid-cols-2 gap-3">
@@ -193,7 +163,6 @@ export default async function DashboardPage() {
           ))}
         </div>
       </div>
-
     </div>
   )
 }
