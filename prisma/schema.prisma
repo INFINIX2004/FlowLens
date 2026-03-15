@@ -15,6 +15,7 @@ model Organization {
   createdAt         DateTime     @default(now())
   repos             Repository[]
   members           Member[]
+  goals             TeamGoal?
   slackConfig       SlackConfig?
 }
 
@@ -147,4 +148,19 @@ model SlackConfig {
   events    String[] // e.g. ["pr_merged","cycle_time_exceeded","daily_digest"]
   createdAt DateTime @default(now())
   org       Organization @relation(fields: [orgId], references: [id])
+}
+
+model TeamGoal {
+  id                  String       @id @default(cuid())
+  orgId               String
+  deployFrequency     Float?       // target deploys/week
+  leadTime            Float?       // target hrs
+  changeFailureRate   Float?       // target %
+  mttr                Float?       // target hrs
+  avgCycleTime        Float?       // target hrs
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  org                 Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId])
 }

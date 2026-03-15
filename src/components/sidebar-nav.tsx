@@ -9,6 +9,7 @@ const links = [
   { href: '/dashboard/charts', label: 'Trends', icon: '↗' },
   { href: '/dashboard/retrospective', label: 'AI Retro', icon: '✦' },
   { href: '/dashboard/settings', label: 'Settings', icon: '⚙' },
+  { href: '/dashboard/goals', label: 'Goals', icon: '◎' },
 ]
 
 export default function SidebarNav() {
