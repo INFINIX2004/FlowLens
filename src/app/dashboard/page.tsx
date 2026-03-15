@@ -86,7 +86,15 @@ export default async function DashboardPage() {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        <SyncButton />
+        <div className="flex items-center gap-2">
+          <a
+            href="/api/export/pdf"
+            className="flex items-center gap-2 text-xs border border-white/[0.08] bg-white/[0.05] text-gray-300 hover:bg-white/[0.08] px-3 py-2 rounded-md transition-all"
+          >
+            ↓ Export PDF
+          </a>
+          <SyncButton />
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3 mb-6">
