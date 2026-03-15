@@ -5,6 +5,9 @@ import Groq from 'groq-sdk'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
+import type { Repository, PullRequest, Deployment } from '@prisma/client'
+
+type RepoWithIncludes = Repository & { pullRequests: PullRequest[], deployments: Deployment[] }
 
 export async function POST() {
   const { userId } = await auth()
@@ -21,8 +24,8 @@ export async function POST() {
     },
   })
 
-  const allPRs = repos.flatMap(r => r.pullRequests)
-  const allDeploys = repos.flatMap(r => r.deployments)
+  const allPRs = repos.flatMap((r: RepoWithIncludes) => r.pullRequests)
+  const allDeploys = repos.flatMap((r: RepoWithIncludes) => r.deployments)
   const avgCycleTime = allPRs.length > 0
     ? allPRs.reduce((s, p) => s + (p.cycleTimeHrs ?? 0), 0) / allPRs.length : 0
   const failedDeploys = allDeploys.filter(d => d.status === 'failure').length
