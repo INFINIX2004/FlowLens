@@ -2,7 +2,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getGithubRepos } from '@/lib/github'
-import { getDORAMetrics } from '@/lib/metrics'
+import { getDORAMetrics, getPerformanceLevel, BENCHMARKS } from '@/lib/metrics'
 import SyncButton from '@/components/sync-button'
 
 export default async function DashboardPage() {
@@ -10,55 +10,96 @@ export default async function DashboardPage() {
   if (!user) redirect('/sign-in')
 
   const org = await prisma.organization.findUnique({ where: { clerkOrgId: user.id } })
-// No GitHub connected yet → show onboarding
-if (!org?.githubAccessToken) {
-  return (
-    <div className="p-8 flex items-center justify-center min-h-screen">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">⚡</div>
-          <h1 className="text-xl font-semibold mb-2">Welcome to FlowLens</h1>
-          <p className="text-gray-500 text-sm">Let's get your engineering metrics set up. It takes less than 2 minutes.</p>
-        </div>
 
-        <div className="space-y-3">
-          {[
-            { step: '01', title: 'Connect GitHub', desc: 'Link your repos to start pulling PR and deployment data', done: false, action: { label: 'Connect GitHub', href: '/api/github/connect' } },
-            { step: '02', title: 'Sync your data', desc: 'Pull in your PRs, commits and releases', done: false, action: null },
-            { step: '03', title: 'View your metrics', desc: 'See DORA metrics, PR cycle times and AI insights', done: false, action: null },
-          ].map((s) => (
-            <div key={s.step} className={`border rounded-xl p-5 flex items-start gap-4 ${s.done ? 'border-emerald-500/20 bg-emerald-500/[0.03]' : 'border-white/[0.06] bg-white/[0.02]'}`}>
-              <span className="text-xs font-mono text-gray-600 mt-0.5">{s.step}</span>
-              <div className="flex-1">
-                <p className="text-sm font-medium mb-0.5">{s.title}</p>
-                <p className="text-xs text-gray-500">{s.desc}</p>
+  if (!org?.githubAccessToken) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-screen">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">⚡</div>
+            <h1 className="text-xl font-semibold mb-2">Welcome to FlowLens</h1>
+            <p className="text-gray-500 text-sm">Let's get your engineering metrics set up. It takes less than 2 minutes.</p>
+          </div>
+          <div className="space-y-3">
+            {[
+              { step: '01', title: 'Connect GitHub', desc: 'Link your repos to start pulling PR and deployment data', action: { label: 'Connect GitHub', href: '/api/github/connect' } },
+              { step: '02', title: 'Sync your data', desc: 'Pull in your PRs, commits and releases', action: null },
+              { step: '03', title: 'View your metrics', desc: 'See DORA metrics, PR cycle times and AI insights', action: null },
+            ].map((s) => (
+              <div key={s.step} className="border border-white/[0.06] bg-white/[0.02] rounded-xl p-5 flex items-start gap-4">
+                <span className="text-xs font-mono text-gray-600 mt-0.5">{s.step}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium mb-0.5">{s.title}</p>
+                  <p className="text-xs text-gray-500">{s.desc}</p>
+                </div>
+                {s.action && (
+                  <a href={s.action.href}>
+                    <button className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md transition">
+                      {s.action.label}
+                    </button>
+                  </a>
+                )}
               </div>
-              {s.action && (
-                <a href={s.action.href}>
-                  <button className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md transition">
-                    {s.action.label}
-                  </button>
-                </a>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   const [repos, metrics] = await Promise.all([
-    org?.githubAccessToken ? getGithubRepos(org.githubAccessToken) : [],
-    org ? getDORAMetrics(org.id) : null,
+    getGithubRepos(org.githubAccessToken),
+    getDORAMetrics(org.id),
   ])
 
   const doraCards = [
-    { label: 'Deployment Freq', value: metrics?.deployFrequency ?? null, unit: '/ week', good: (v: number) => v >= 3, description: 'Releases per week' },
-    { label: 'Lead Time', value: metrics?.leadTime ?? null, unit: 'hrs', good: (v: number) => v <= 24, description: 'Commit to production' },
-    { label: 'Failure Rate', value: metrics?.changeFailureRate ?? null, unit: '%', good: (v: number) => v <= 15, description: 'Failed deployments' },
-    { label: 'MTTR', value: metrics?.mttr ?? null, unit: 'hrs', good: (v: number) => v <= 1, description: 'Mean time to restore' },
+    {
+      key: 'deployFrequency',
+      label: 'Deployment Freq',
+      value: metrics.deployFrequency,
+      unit: '/ week',
+      benchmark: BENCHMARKS.deployFrequency,
+      higherIsBetter: true,
+    },
+    {
+      key: 'leadTime',
+      label: 'Lead Time',
+      value: metrics.leadTime,
+      unit: 'hrs',
+      benchmark: BENCHMARKS.leadTime,
+      higherIsBetter: false,
+    },
+    {
+      key: 'changeFailureRate',
+      label: 'Failure Rate',
+      value: metrics.changeFailureRate,
+      unit: '%',
+      benchmark: BENCHMARKS.changeFailureRate,
+      higherIsBetter: false,
+    },
+    {
+      key: 'mttr',
+      label: 'MTTR',
+      value: metrics.mttr,
+      unit: 'hrs',
+      benchmark: BENCHMARKS.mttr,
+      higherIsBetter: false,
+    },
   ]
+
+  const levelColors = {
+    elite: 'text-emerald-400 bg-emerald-500/10',
+    high: 'text-blue-400 bg-blue-500/10',
+    medium: 'text-yellow-400 bg-yellow-500/10',
+    low: 'text-red-400 bg-red-500/10',
+  }
+
+  const levelLabels = {
+    elite: '⬆ elite',
+    high: '↑ high',
+    medium: '→ medium',
+    low: '↓ low',
+  }
 
   return (
     <div className="p-8">
@@ -75,78 +116,84 @@ if (!org?.githubAccessToken) {
       </div>
 
       {/* DORA Cards */}
-      <div className="grid grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-4 gap-3 mb-6">
         {doraCards.map((m) => {
           const hasValue = m.value !== null
-          const isGood = hasValue && m.good(m.value as number)
+          const level = hasValue ? getPerformanceLevel(m.key, m.value as number) : null
           return (
             <div key={m.label} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.12] transition-all">
               <div className="flex items-start justify-between mb-4">
                 <p className="text-xs text-gray-500 uppercase tracking-widest">{m.label}</p>
-                {hasValue && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${isGood ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                    {isGood ? '↑ good' : '↓ low'}
+                {level && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${levelColors[level]}`}>
+                    {levelLabels[level]}
                   </span>
                 )}
               </div>
               <p className="text-3xl font-bold tracking-tight mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                 {hasValue ? m.value : <span className="text-gray-700">—</span>}
               </p>
-              <p className="text-xs text-gray-600">{hasValue ? m.unit : m.description}</p>
+              <p className="text-xs text-gray-600 mb-3">{hasValue ? m.unit : 'no data yet'}</p>
+              {/* Benchmark bar */}
+              {hasValue && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-xs text-gray-700 mb-1">
+                    <span>vs industry</span>
+                    <span>{m.higherIsBetter ? `elite ≥ ${m.benchmark.elite}` : `elite ≤ ${m.benchmark.elite}`} {m.unit}</span>
+                  </div>
+                  <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${
+                      level === 'elite' ? 'bg-emerald-500' :
+                      level === 'high' ? 'bg-blue-500' :
+                      level === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                    }`} style={{
+                      width: m.higherIsBetter
+                        ? `${Math.min((m.value as number / m.benchmark.elite) * 100, 100)}%`
+                        : `${Math.min((m.benchmark.elite / (m.value as number)) * 100, 100)}%`
+                    }} />
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}
       </div>
 
       {/* Stats row */}
-      {metrics && (
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {[
-            { label: 'Total PRs tracked', value: metrics.totalPRs },
-            { label: 'Total deployments', value: metrics.totalDeploys },
-            { label: 'Repos connected', value: repos.length },
-          ].map((s) => (
-            <div key={s.label} className="bg-white/[0.02] border border-white/[0.05] rounded-lg px-5 py-4 flex items-center justify-between">
-              <span className="text-sm text-gray-500">{s.label}</span>
-              <span className="text-lg font-semibold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</span>
+      <div className="grid grid-cols-3 gap-3 mb-8">
+        {[
+          { label: 'Total PRs tracked', value: metrics.totalPRs },
+          { label: 'Total deployments', value: metrics.totalDeploys },
+          { label: 'Repos connected', value: repos.length },
+        ].map((s) => (
+          <div key={s.label} className="bg-white/[0.02] border border-white/[0.05] rounded-lg px-5 py-4 flex items-center justify-between">
+            <span className="text-sm text-gray-500">{s.label}</span>
+            <span className="text-lg font-semibold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Repos */}
+      <div>
+        <h2 className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">Repositories</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {repos.slice(0, 6).map((repo: any) => (
+            <div key={repo.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] transition-all group">
+              <div className="flex items-start justify-between mb-2">
+                <p className="font-medium text-sm group-hover:text-blue-400 transition-colors">{repo.name}</p>
+                <span className="text-xs bg-white/[0.05] text-gray-400 px-2 py-0.5 rounded-full">{repo.language ?? '—'}</span>
+              </div>
+              <p className="text-gray-600 text-xs truncate mb-3">{repo.description ?? 'No description'}</p>
+              <div className="flex gap-3 text-xs text-gray-600">
+                <span>⭐ {repo.stargazers_count}</span>
+                <span>🍴 {repo.forks_count}</span>
+                <span className="ml-auto">{new Date(repo.updated_at).toLocaleDateString()}</span>
+              </div>
             </div>
           ))}
         </div>
-      )}
+      </div>
 
-      {/* Repos */}
-      {!org?.githubAccessToken ? (
-        <div className="border border-dashed border-white/10 rounded-xl p-12 text-center">
-          <p className="text-4xl mb-3">🔗</p>
-          <h2 className="text-lg font-medium mb-2">Connect GitHub</h2>
-          <p className="text-gray-500 text-sm mb-6">Link your repos to start seeing metrics.</p>
-          <a href="/api/github/connect">
-            <button className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
-              Connect GitHub
-            </button>
-          </a>
-        </div>
-      ) : (
-        <div>
-          <h2 className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-4">Repositories</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {repos.slice(0, 6).map((repo: any) => (
-              <div key={repo.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] transition-all group">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="font-medium text-sm group-hover:text-blue-400 transition-colors">{repo.name}</p>
-                  <span className="text-xs bg-white/[0.05] text-gray-400 px-2 py-0.5 rounded-full">{repo.language ?? '—'}</span>
-                </div>
-                <p className="text-gray-600 text-xs truncate mb-3">{repo.description ?? 'No description'}</p>
-                <div className="flex gap-3 text-xs text-gray-600">
-                  <span>⭐ {repo.stargazers_count}</span>
-                  <span>🍴 {repo.forks_count}</span>
-                  <span className="ml-auto">{new Date(repo.updated_at).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
