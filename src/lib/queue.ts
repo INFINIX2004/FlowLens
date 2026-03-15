@@ -3,12 +3,25 @@ import { decrypt } from './encryption'
 import * as Sentry from '@sentry/nextjs'
 import { prisma } from './prisma'
 
+type GithubReview = {
+  submitted_at: string | null
+  state: string
+  user: {
+    login: string
+  }
+}
+
 const connection = {
   url: process.env.REDIS_URL!,
   tls: { rejectUnauthorized: false },
 }
 
 export const syncQueue = new Queue('github-sync', { connection })
+let syncWorker: Worker | null = null
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error'
+}
 
 export function createSyncWorker() {
   return new Worker(
@@ -69,16 +82,17 @@ export function createSyncWorker() {
             if (Array.isArray(prs)) {
               for (const pr of prs.slice(0, 30)) {
                 const detail = await getPRDetail(accessToken, repo.full_name, pr.number)
-                const reviews = await getPRReviews(accessToken, repo.full_name, pr.number)
+                const reviewsData = await getPRReviews(accessToken, repo.full_name, pr.number)
+                const reviews: GithubReview[] = Array.isArray(reviewsData) ? reviewsData : []
 
                 const createdAt = new Date(pr.created_at)
                 const mergedAt = pr.merged_at ? new Date(pr.merged_at) : null
-                const firstReview = Array.isArray(reviews) && reviews.length > 0
-                  ? reviews.sort((a: any, b: any) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime())[0]
+                const firstReview = reviews.length > 0
+                  ? reviews.sort((a, b) => new Date(a.submitted_at ?? 0).getTime() - new Date(b.submitted_at ?? 0).getTime())[0]
                   : null
-                const firstReviewAt = firstReview ? new Date(firstReview.submitted_at) : null
-                const firstApproval = Array.isArray(reviews) ? reviews.find((r: any) => r.state === 'APPROVED') : null
-                const approvedAt = firstApproval ? new Date(firstApproval.submitted_at) : null
+                const firstReviewAt = firstReview?.submitted_at ? new Date(firstReview.submitted_at) : null
+                const firstApproval = reviews.find(r => r.state === 'APPROVED') ?? null
+                const approvedAt = firstApproval?.submitted_at ? new Date(firstApproval.submitted_at) : null
 
                 const cycleTimeHrs = mergedAt ? hrs(createdAt, mergedAt) : null
                 const codingTimeHrs = firstReviewAt ? hrs(createdAt, firstReviewAt) : null
@@ -88,19 +102,17 @@ export function createSyncWorker() {
 
                 const dbPR = await prisma.pullRequest.upsert({
                   where: { repoId_githubPrId: { repoId: dbRepo.id, githubPrId: pr.number } },
-                  update: { cycleTimeHrs, codingTimeHrs, reviewWaitHrs, reviewTimeHrs, mergeDelayHrs, firstReviewAt, approvedAt, mergedAt, additions: detail.additions ?? 0, deletions: detail.deletions ?? 0, changedFiles: detail.changed_files ?? 0, commitCount: detail.commits ?? 0, reviewCount: Array.isArray(reviews) ? reviews.length : 0 },
-                  create: { githubPrId: pr.number, repoId: dbRepo.id, title: pr.title, authorLogin: pr.user.login, state: pr.state, createdAt, mergedAt, firstReviewAt, approvedAt, additions: detail.additions ?? 0, deletions: detail.deletions ?? 0, changedFiles: detail.changed_files ?? 0, commitCount: detail.commits ?? 0, reviewCount: Array.isArray(reviews) ? reviews.length : 0, cycleTimeHrs, codingTimeHrs, reviewWaitHrs, reviewTimeHrs, mergeDelayHrs },
+                  update: { cycleTimeHrs, codingTimeHrs, reviewWaitHrs, reviewTimeHrs, mergeDelayHrs, firstReviewAt, approvedAt, mergedAt, additions: detail.additions ?? 0, deletions: detail.deletions ?? 0, changedFiles: detail.changed_files ?? 0, commitCount: detail.commits ?? 0, reviewCount: reviews.length },
+                  create: { githubPrId: pr.number, repoId: dbRepo.id, title: pr.title, authorLogin: pr.user.login, state: pr.state, createdAt, mergedAt, firstReviewAt, approvedAt, additions: detail.additions ?? 0, deletions: detail.deletions ?? 0, changedFiles: detail.changed_files ?? 0, commitCount: detail.commits ?? 0, reviewCount: reviews.length, cycleTimeHrs, codingTimeHrs, reviewWaitHrs, reviewTimeHrs, mergeDelayHrs },
                 })
 
-                if (Array.isArray(reviews)) {
-                  for (const review of reviews) {
-                    if (!review.submitted_at) continue
-                    await prisma.pullRequestReview.upsert({
-                      where: { prId_reviewerLogin_submittedAt: { prId: dbPR.id, reviewerLogin: review.user.login, submittedAt: new Date(review.submitted_at) } },
-                      update: {},
-                      create: { prId: dbPR.id, reviewerLogin: review.user.login, state: review.state, submittedAt: new Date(review.submitted_at) },
-                    })
-                  }
+                for (const review of reviews) {
+                  if (!review.submitted_at) continue
+                  await prisma.pullRequestReview.upsert({
+                    where: { prId_reviewerLogin_submittedAt: { prId: dbPR.id, reviewerLogin: review.user.login, submittedAt: new Date(review.submitted_at) } },
+                    update: {},
+                    create: { prId: dbPR.id, reviewerLogin: review.user.login, state: review.state, submittedAt: new Date(review.submitted_at) },
+                  })
                 }
                 totalPRs++
               }
@@ -141,11 +153,11 @@ export function createSyncWorker() {
           })
 
           return { totalPRs, totalDeploys }
-        } catch (err: any) {
+        } catch (err: unknown) {
           Sentry.captureException(err)
           await prisma.syncJob.updateMany({
             where: { orgId, status: 'running' },
-            data: { status: 'error', error: err.message, doneAt: new Date() },
+            data: { status: 'error', error: getErrorMessage(err), doneAt: new Date() },
           })
           throw err
         }
@@ -153,4 +165,12 @@ export function createSyncWorker() {
     },
     { connection }
   )
+}
+
+export function ensureSyncWorkerStarted() {
+  if (!syncWorker) {
+    syncWorker = createSyncWorker()
+  }
+
+  return syncWorker
 }

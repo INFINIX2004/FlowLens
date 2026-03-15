@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
-import { syncQueue } from '@/lib/queue'
+import { ensureSyncWorkerStarted, syncQueue } from '@/lib/queue'
 import { NextResponse } from 'next/server'
 
 export async function POST() {
@@ -14,6 +14,8 @@ export async function POST() {
   const job = await prisma.syncJob.create({
     data: { orgId: org.id, status: 'pending' }
   })
+
+  ensureSyncWorkerStarted()
 
   // Enqueue background job
   await syncQueue.add('sync', { orgId: org.id }, {

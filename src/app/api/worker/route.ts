@@ -1,11 +1,11 @@
-import { createSyncWorker } from '@/lib/queue'
+import { ensureSyncWorkerStarted } from '@/lib/queue'
 import { NextResponse } from 'next/server'
 
 let workerStarted = false
 
 export async function GET() {
   if (!workerStarted) {
-    createSyncWorker()
+    ensureSyncWorkerStarted()
     workerStarted = true
     console.log('Worker started')
   }
