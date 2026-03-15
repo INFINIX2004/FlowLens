@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
-import { ensureSyncWorkerStarted, syncQueue } from '@/lib/queue'
+import { syncQueue } from '@/lib/queue'
 import { NextResponse } from 'next/server'
 
 export async function POST() {
@@ -10,14 +10,10 @@ export async function POST() {
   const org = await prisma.organization.findUnique({ where: { clerkOrgId: userId } })
   if (!org?.githubAccessToken) return NextResponse.json({ error: 'GitHub not connected' }, { status: 400 })
 
-  // Create sync job record
   const job = await prisma.syncJob.create({
-    data: { orgId: org.id, status: 'pending' }
+    data: { orgId: org.id, status: 'pending' },
   })
 
-  ensureSyncWorkerStarted()
-
-  // Enqueue background job
   await syncQueue.add('sync', { orgId: org.id }, {
     jobId: job.id,
     attempts: 3,

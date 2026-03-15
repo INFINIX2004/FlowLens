@@ -1,7 +1,7 @@
+import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { ensureSyncWorkerStarted, syncQueue } from '@/lib/queue'
-import crypto from 'crypto'
+import { syncQueue } from '@/lib/queue'
 
 function verifySignature(payload: string, signature: string, secret: string): boolean {
   if (!signature || !secret) return false
@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-hub-signature-256') ?? ''
   const event = request.headers.get('x-github-event') ?? ''
 
-  // Verify webhook signature
   if (!verifySignature(payload, signature, process.env.GITHUB_WEBHOOK_SECRET!)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
@@ -30,7 +29,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, event: 'ping' })
   }
 
-  // Find org by GitHub login
   const org = await prisma.organization.findFirst({
     where: { githubLogin: body.repository?.owner?.login ?? body.organization?.login },
   })
@@ -39,7 +37,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Org not found' }, { status: 404 })
   }
 
-  // Handle relevant events
   const triggerEvents = [
     'deployment',
     'issue_comment',
@@ -53,16 +50,12 @@ export async function POST(request: NextRequest) {
   if (triggerEvents.includes(event)) {
     console.log(`Webhook received: ${event} for org ${org.githubLogin}`)
 
-    ensureSyncWorkerStarted()
-
-    // Enqueue incremental sync
     await syncQueue.add(
       'sync',
       { orgId: org.id },
       {
         attempts: 3,
         backoff: { type: 'exponential', delay: 5000 },
-        // Deduplicate — don't queue if one is already pending
         jobId: `webhook-${org.id}-${Date.now()}`,
       }
     )

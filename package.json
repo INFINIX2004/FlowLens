@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "worker": "tsx watch worker/index.ts",
+    "worker:prod": "tsx worker/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -17,6 +19,7 @@
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@sentry/nextjs": "^10.43.0",
+    "@slack/web-api": "^7.15.0",
     "bullmq": "^5.71.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -42,6 +45,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
