@@ -36,13 +36,26 @@ export function createSyncWorker() {
       for (const repo of repos.slice(0, 10)) {
         await job.updateProgress(Math.round((repos.indexOf(repo) / repos.length) * 100))
 
+        // Check last sync time for incremental sync
+        const existingRepo = await prisma.repository.findUnique({
+          where: { githubId: repo.id }
+        })
+        const lastSyncedAt = existingRepo?.lastSyncedAt ?? undefined
+
+        if (lastSyncedAt) {
+          console.log(`Incremental sync for ${repo.full_name} since ${lastSyncedAt.toISOString()}`)
+        } else {
+          console.log(`Full sync for ${repo.full_name}`)
+        }
+
         const dbRepo = await prisma.repository.upsert({
           where: { githubId: repo.id },
           update: { name: repo.name, fullName: repo.full_name, lastSyncedAt: new Date() },
           create: { githubId: repo.id, name: repo.name, fullName: repo.full_name, orgId: org.id, lastSyncedAt: new Date() },
         })
 
-        const prs = await getPullRequests(org.githubAccessToken, repo.full_name)
+        // Only fetch PRs updated since last sync
+        const prs = await getPullRequests(org.githubAccessToken, repo.full_name, lastSyncedAt)
         if (Array.isArray(prs)) {
           for (const pr of prs.slice(0, 30)) {
             const detail = await getPRDetail(org.githubAccessToken, repo.full_name, pr.number)
@@ -95,7 +108,7 @@ export function createSyncWorker() {
           }
         }
 
-        const runs = await getWorkflowRuns(org.githubAccessToken, repo.full_name)
+        const runs = await getWorkflowRuns(org.githubAccessToken, repo.full_name, lastSyncedAt)
         if (runs?.workflow_runs && Array.isArray(runs.workflow_runs)) {
           for (const run of runs.workflow_runs.slice(0, 20)) {
             if (run.name?.toLowerCase().includes('deploy') || run.name?.toLowerCase().includes('release')) {
@@ -109,7 +122,9 @@ export function createSyncWorker() {
           }
         }
       }
-
+      // Take metrics snapshot
+      const { takeMetricsSnapshot } = await import('./snapshots')
+      await takeMetricsSnapshot(orgId)
       await prisma.syncJob.updateMany({
         where: { orgId, status: 'running' },
         data: { status: 'done', doneAt: new Date() },

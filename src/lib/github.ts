@@ -5,9 +5,10 @@ export async function getGithubRepos(accessToken: string) {
   return res.json()
 }
 
-export async function getPullRequests(accessToken: string, fullName: string) {
+export async function getPullRequests(accessToken: string, fullName: string, since?: Date) {
+  const sinceParam = since ? `&since=${since.toISOString()}` : ''
   const res = await fetch(
-    `https://api.github.com/repos/${fullName}/pulls?state=all&per_page=100&sort=updated`,
+    `https://api.github.com/repos/${fullName}/pulls?state=all&per_page=100&sort=updated&direction=desc${sinceParam}`,
     { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json' } }
   )
   return res.json()
@@ -29,9 +30,10 @@ export async function getPRReviews(accessToken: string, fullName: string, prNumb
   return res.json()
 }
 
-export async function getWorkflowRuns(accessToken: string, fullName: string) {
+export async function getWorkflowRuns(accessToken: string, fullName: string, since?: Date) {
+  const sinceParam = since ? `&created=>=${since.toISOString()}` : ''
   const res = await fetch(
-    `https://api.github.com/repos/${fullName}/actions/runs?per_page=50&status=completed`,
+    `https://api.github.com/repos/${fullName}/actions/runs?per_page=50&status=completed${sinceParam}`,
     { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github+json' } }
   )
   return res.json()

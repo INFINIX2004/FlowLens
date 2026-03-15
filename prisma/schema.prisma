@@ -65,6 +65,10 @@ model PullRequest {
   reviews        PullRequestReview[]
 
   @@unique([repoId, githubPrId])
+  @@index([repoId])
+  @@index([mergedAt])
+  @@index([authorLogin])
+  @@index([createdAt])
 }
 
 model PullRequestReview {
@@ -76,6 +80,8 @@ model PullRequestReview {
   pr            PullRequest @relation(fields: [prId], references: [id])
 
   @@unique([prId, reviewerLogin, submittedAt])
+  @@index([prId])
+  @@index([reviewerLogin])
 }
 
 model Deployment {
@@ -89,7 +95,11 @@ model Deployment {
   repo            Repository @relation(fields: [repoId], references: [id])
 
   @@unique([repoId, githubReleaseId])
+  @@index([repoId])
+  @@index([deployedAt])
+  @@index([status])
 }
+
 
 model SyncJob {
   id        String    @id @default(cuid())
@@ -99,4 +109,31 @@ model SyncJob {
   doneAt    DateTime?
   error     String?
   createdAt DateTime  @default(now())
+
+  @@index([orgId])
+  @@index([status])
+}
+
+model MetricsSnapshot {
+  id                  String   @id @default(cuid())
+  orgId               String
+  repoId              String?
+  period              String
+  periodStart         DateTime
+  deployFrequency     Float?
+  leadTime            Float?
+  changeFailureRate   Float?
+  mttr                Float?
+  totalPRs            Int      @default(0)
+  totalDeploys        Int      @default(0)
+  avgCycleTime        Float?
+  avgCodingTime       Float?
+  avgReviewWaitTime   Float?
+  avgReviewTime       Float?
+  avgMergeDelay       Float?
+  createdAt           DateTime @default(now())
+
+  @@unique([orgId, period, periodStart])
+  @@index([orgId])
+  @@index([periodStart])
 }
