@@ -1,11 +1,27 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import type { Prisma, PullRequestReview } from '@prisma/client'
 
-type PullRequestWithRepo = Prisma.PullRequestGetPayload<{
-  include: { repo: true }
-}>
+type PullRequestWithRepo = {
+  id: string
+  repoId: string
+  title: string
+  authorLogin: string
+  additions: number
+  deletions: number
+  cycleTimeHrs: number | null
+  codingTimeHrs: number | null
+  reviewWaitHrs: number | null
+  reviewTimeHrs: number | null
+  mergeDelayHrs: number | null
+  repo: {
+    name: string
+  }
+}
+
+type ReviewerWorkloadReview = {
+  reviewerLogin: string
+}
 
 type PullRequestSizeBucket = {
   label: string
@@ -38,7 +54,7 @@ export default async function PRsPage() {
 
   // Reviewer workload
   const reviewerMap: Record<string, number> = {}
-  const allReviews: PullRequestReview[] = await prisma.pullRequestReview.findMany({
+  const allReviews: ReviewerWorkloadReview[] = await prisma.pullRequestReview.findMany({
     where: { pr: { repo: { orgId: org.id } } },
   })
   for (const r of allReviews) {
