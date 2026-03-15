@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
 
 export default withSentryConfig(nextConfig, {
   org: 'flowlens-ba',
-  project: 'flowlens',
+  project: 'javascript-nextjs',
   silent: !process.env.CI,
   widenClientFileUpload: true,
 })
