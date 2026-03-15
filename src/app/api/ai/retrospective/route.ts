@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import Groq from 'groq-sdk'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 
 export async function POST() {
   const { userId } = await auth()
@@ -50,6 +51,7 @@ export async function POST() {
       return NextResponse.json({ retrospective: text, provider: 'groq' })
     } catch (e: any) {
       console.warn('Groq failed:', e.message)
+      Sentry.captureException(e, { tags: { provider: 'groq' } })
     }
   }
 
@@ -64,6 +66,7 @@ export async function POST() {
       return NextResponse.json({ retrospective: text, provider: 'gemini' })
     } catch (e: any) {
       console.warn('Gemini failed:', e.message)
+      Sentry.captureException(e, { tags: { provider: 'gemini' } })
     }
   }
 
@@ -81,6 +84,7 @@ export async function POST() {
       return NextResponse.json({ retrospective: text, provider: 'anthropic' })
     } catch (e: any) {
       console.warn('Anthropic failed:', e.message)
+      Sentry.captureException(e, { tags: { provider: 'anthropic' } })
     }
   }
 
