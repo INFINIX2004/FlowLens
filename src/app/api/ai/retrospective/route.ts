@@ -24,8 +24,8 @@ export async function POST() {
   const allPRs = repos.flatMap((r: any) => r.pullRequests)
   const allDeploys = repos.flatMap((r: any) => r.deployments)
   const avgCycleTime = allPRs.length > 0
-    ? allPRs.reduce((s, p) => s + (p.cycleTimeHrs ?? 0), 0) / allPRs.length : 0
-  const failedDeploys = allDeploys.filter(d => d.status === 'failure').length
+    ? allPRs.reduce((s: number, p: any) => s + (p.cycleTimeHrs ?? 0), 0) / allPRs.length : 0
+  const failedDeploys = allDeploys.filter((d: any) => d.status === 'failure').length
   const failureRate = allDeploys.length > 0 ? (failedDeploys / allDeploys.length) * 100 : 0
 
   const prompt = `You are an engineering analytics assistant. Write a brief sprint retrospective (under 200 words) based on:
@@ -33,7 +33,7 @@ export async function POST() {
 - Merged PRs: ${allPRs.length}
 - Avg cycle time: ${Math.round(avgCycleTime * 10) / 10}h
 - Deployments: ${allDeploys.length}, failures: ${failedDeploys} (${Math.round(failureRate)}%)
-- Authors: ${[...new Set(allPRs.map(p => p.authorLogin))].slice(0, 3).join(', ')}
+- Authors: ${[...new Set(allPRs.map((p: any) => p.authorLogin))].slice(0, 3).join(', ')}
 
 3 sections: What went well, Areas to improve, Recommendations. Use markdown bullets.`
 
