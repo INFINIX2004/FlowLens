@@ -13,12 +13,4 @@ export default withSentryConfig(nextConfig, {
   project: 'flowlens',
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  hideSourceMaps: true,
-  webpack: {
-    reactComponentAnnotation: { enabled: true },
-    automaticVercelMonitors: true,
-    treeshake: {
-      removeDebugLogging: true,
-    },
-  },
 })
