@@ -1,6 +1,17 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import type { Prisma, PullRequestReview } from '@prisma/client'
+
+type PullRequestWithRepo = Prisma.PullRequestGetPayload<{
+  include: { repo: true }
+}>
+
+type PullRequestSizeBucket = {
+  label: string
+  filter: (pr: PullRequestWithRepo) => boolean
+  color: 'emerald' | 'yellow' | 'red'
+}
 
 export default async function PRsPage() {
   const user = await currentUser()
@@ -9,7 +20,7 @@ export default async function PRsPage() {
   const org = await prisma.organization.findUnique({ where: { clerkOrgId: user.id } })
   if (!org) redirect('/dashboard')
 
-  const prs = await prisma.pullRequest.findMany({
+  const prs: PullRequestWithRepo[] = await prisma.pullRequest.findMany({
     where: { repo: { orgId: org.id }, mergedAt: { not: null } },
     include: { repo: true },
     orderBy: { mergedAt: 'desc' },
@@ -27,7 +38,7 @@ export default async function PRsPage() {
 
   // Reviewer workload
   const reviewerMap: Record<string, number> = {}
-  const allReviews = await prisma.pullRequestReview.findMany({
+  const allReviews: PullRequestReview[] = await prisma.pullRequestReview.findMany({
     where: { pr: { repo: { orgId: org.id } } },
   })
   for (const r of allReviews) {
@@ -105,11 +116,11 @@ export default async function PRsPage() {
           <p className="text-sm font-medium mb-1">PR Size Analysis</p>
           <p className="text-xs text-gray-500 mb-4">Large PRs take longer to review and have more bugs</p>
           <div className="space-y-2">
-            {[
-              { label: 'Small (< 100 lines)', filter: (p: any) => (p.additions + p.deletions) < 100, color: 'emerald' },
-              { label: 'Medium (100–400 lines)', filter: (p: any) => (p.additions + p.deletions) >= 100 && (p.additions + p.deletions) < 400, color: 'yellow' },
-              { label: 'Large (> 400 lines)', filter: (p: any) => (p.additions + p.deletions) >= 400, color: 'red' },
-            ].map((bucket) => {
+            {([
+              { label: 'Small (< 100 lines)', filter: (p: PullRequestWithRepo) => (p.additions + p.deletions) < 100, color: 'emerald' },
+              { label: 'Medium (100–400 lines)', filter: (p: PullRequestWithRepo) => (p.additions + p.deletions) >= 100 && (p.additions + p.deletions) < 400, color: 'yellow' },
+              { label: 'Large (> 400 lines)', filter: (p: PullRequestWithRepo) => (p.additions + p.deletions) >= 400, color: 'red' },
+            ] satisfies PullRequestSizeBucket[]).map((bucket) => {
               const count = prs.filter(bucket.filter).length
               const pct = prs.length > 0 ? Math.round((count / prs.length) * 100) : 0
               return (
