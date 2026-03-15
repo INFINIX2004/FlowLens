@@ -2,6 +2,16 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
+type LeadTimeTrendPoint = {
+  date: string
+  hours: number
+}
+
+type DeployFrequencyPoint = {
+  week: string
+  deployments: number
+}
+
 export async function GET() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -23,7 +33,7 @@ export async function GET() {
   const allDeploys = repos.flatMap(r => r.deployments)
 
   // Lead time trend — group by day
-  const leadTimeTrend = allPRs.reduce((acc: any[], pr) => {
+  const leadTimeTrend = allPRs.reduce<LeadTimeTrendPoint[]>((acc, pr) => {
     const date = pr.mergedAt!.toISOString().slice(0, 10)
     const existing = acc.find(d => d.date === date)
     if (existing) {
@@ -35,7 +45,7 @@ export async function GET() {
   }, []).slice(-14)
 
   // Deploy frequency — group by week
-  const deployFrequency = allDeploys.reduce((acc: any[], d) => {
+  const deployFrequency = allDeploys.reduce<DeployFrequencyPoint[]>((acc, d) => {
     const week = `W${getWeekNumber(d.deployedAt)}`
     const existing = acc.find(w => w.week === week)
     if (existing) existing.deployments++
