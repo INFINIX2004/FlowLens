@@ -15,6 +15,7 @@ model Organization {
   createdAt         DateTime     @default(now())
   repos             Repository[]
   members           Member[]
+  slackConfig       SlackConfig?
 }
 
 model Member {
@@ -136,4 +137,14 @@ model MetricsSnapshot {
   @@unique([orgId, period, periodStart])
   @@index([orgId])
   @@index([periodStart])
+}
+
+model SlackConfig {
+  id        String   @id @default(cuid())
+  orgId     String   @unique
+  botToken  String
+  channel   String
+  events    String[] // e.g. ["pr_merged","cycle_time_exceeded","daily_digest"]
+  createdAt DateTime @default(now())
+  org       Organization @relation(fields: [orgId], references: [id])
 }

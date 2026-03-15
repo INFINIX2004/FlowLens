@@ -8,6 +8,7 @@ const links = [
   { href: '/dashboard/prs', label: 'Pull Requests', icon: '⌥' },
   { href: '/dashboard/charts', label: 'Trends', icon: '↗' },
   { href: '/dashboard/retrospective', label: 'AI Retro', icon: '✦' },
+  { href: '/dashboard/settings', label: 'Settings', icon: '⚙' },
 ]
 
 export default function SidebarNav() {

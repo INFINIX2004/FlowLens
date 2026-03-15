@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { Job, Worker } from 'bullmq'
 import * as Sentry from '@sentry/nextjs'
+import { notifySlack } from '../src/lib/slack'
 
 type GithubReview = {
   submitted_at: string | null
@@ -174,6 +175,24 @@ const worker = new Worker(
               }
 
               totalPRs++
+
+              if (mergedAt && cycleTimeHrs !== null) {
+                await notifySlack(orgId, 'pr_merged', {
+                  url: `https://github.com/${repo.full_name}/pull/${pr.number}`,
+                  title: pr.title,
+                  author: pr.user.login,
+                  cycleTime: cycleTimeHrs?.toFixed(1) ?? '?',
+                })
+
+                if (cycleTimeHrs > 48) {
+                  await notifySlack(orgId, 'cycle_time_exceeded', {
+                    url: `https://github.com/${repo.full_name}/pull/${pr.number}`,
+                    prTitle: pr.title,
+                    actual: cycleTimeHrs.toFixed(1),
+                    target: '48',
+                  })
+                }
+              }
             }
           }
 
