@@ -1,4 +1,9 @@
 import { prisma } from './prisma'
+import type {
+  ActivityDeployment,
+  ActivityPullRequest,
+  RepositoryWithActivity,
+} from './repository-activity-types'
 
 export async function takeMetricsSnapshot(orgId: string) {
   const now = new Date()
@@ -6,7 +11,7 @@ export async function takeMetricsSnapshot(orgId: string) {
   weekStart.setDate(weekStart.getDate() - weekStart.getDay())
   weekStart.setHours(0, 0, 0, 0)
 
-  const repos = await prisma.repository.findMany({
+  const repos: RepositoryWithActivity[] = await prisma.repository.findMany({
     where: { orgId },
     include: {
       pullRequests: {
@@ -21,8 +26,8 @@ export async function takeMetricsSnapshot(orgId: string) {
     },
   })
 
-  const allPRs = repos.flatMap(r => r.pullRequests)
-  const allDeploys = repos.flatMap(r => r.deployments)
+  const allPRs: ActivityPullRequest[] = repos.flatMap(r => r.pullRequests)
+  const allDeploys: ActivityDeployment[] = repos.flatMap(r => r.deployments)
 
   const avg = (arr: number[]) => arr.length > 0
     ? arr.reduce((a, b) => a + b, 0) / arr.length : null

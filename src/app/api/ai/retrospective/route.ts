@@ -1,10 +1,19 @@
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import type {
+  ActivityDeployment,
+  ActivityPullRequest,
+  RepositoryWithActivity,
+} from '@/lib/repository-activity-types'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import Groq from 'groq-sdk'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error'
+}
 
 export async function POST() {
   const { userId } = await auth()
@@ -13,7 +22,7 @@ export async function POST() {
   const org = await prisma.organization.findUnique({ where: { clerkOrgId: userId } })
   if (!org) return NextResponse.json({ error: 'No org' }, { status: 404 })
 
-  const repos = await prisma.repository.findMany({
+  const repos: RepositoryWithActivity[] = await prisma.repository.findMany({
     where: { orgId: org.id },
     include: {
       pullRequests: { where: { mergedAt: { not: null } }, orderBy: { mergedAt: 'desc' }, take: 20 },
@@ -21,11 +30,11 @@ export async function POST() {
     },
   })
 
-  const allPRs = repos.flatMap((r: any) => r.pullRequests)
-  const allDeploys = repos.flatMap((r: any) => r.deployments)
+  const allPRs: ActivityPullRequest[] = repos.flatMap(r => r.pullRequests)
+  const allDeploys: ActivityDeployment[] = repos.flatMap(r => r.deployments)
   const avgCycleTime = allPRs.length > 0
-    ? allPRs.reduce((s: number, p: any) => s + (p.cycleTimeHrs ?? 0), 0) / allPRs.length : 0
-  const failedDeploys = allDeploys.filter((d: any) => d.status === 'failure').length
+    ? allPRs.reduce((s: number, p) => s + (p.cycleTimeHrs ?? 0), 0) / allPRs.length : 0
+  const failedDeploys = allDeploys.filter(d => d.status === 'failure').length
   const failureRate = allDeploys.length > 0 ? (failedDeploys / allDeploys.length) * 100 : 0
 
   const prompt = `You are an engineering analytics assistant. Write a brief sprint retrospective (under 200 words) based on:
@@ -33,7 +42,7 @@ export async function POST() {
 - Merged PRs: ${allPRs.length}
 - Avg cycle time: ${Math.round(avgCycleTime * 10) / 10}h
 - Deployments: ${allDeploys.length}, failures: ${failedDeploys} (${Math.round(failureRate)}%)
-- Authors: ${[...new Set(allPRs.map((p: any) => p.authorLogin))].slice(0, 3).join(', ')}
+- Authors: ${[...new Set(allPRs.map(p => p.authorLogin))].slice(0, 3).join(', ')}
 
 3 sections: What went well, Areas to improve, Recommendations. Use markdown bullets.`
 
@@ -49,8 +58,8 @@ export async function POST() {
       })
       const text = res.choices[0].message.content ?? ''
       return NextResponse.json({ retrospective: text, provider: 'groq' })
-    } catch (e: any) {
-      console.warn('Groq failed:', e.message)
+    } catch (e: unknown) {
+      console.warn('Groq failed:', getErrorMessage(e))
       Sentry.captureException(e, { tags: { provider: 'groq' } })
     }
   }
@@ -64,8 +73,8 @@ export async function POST() {
       const result = await model.generateContent(prompt)
       const text = result.response.text()
       return NextResponse.json({ retrospective: text, provider: 'gemini' })
-    } catch (e: any) {
-      console.warn('Gemini failed:', e.message)
+    } catch (e: unknown) {
+      console.warn('Gemini failed:', getErrorMessage(e))
       Sentry.captureException(e, { tags: { provider: 'gemini' } })
     }
   }
@@ -82,8 +91,8 @@ export async function POST() {
       })
       const text = message.content[0].type === 'text' ? message.content[0].text : ''
       return NextResponse.json({ retrospective: text, provider: 'anthropic' })
-    } catch (e: any) {
-      console.warn('Anthropic failed:', e.message)
+    } catch (e: unknown) {
+      console.warn('Anthropic failed:', getErrorMessage(e))
       Sentry.captureException(e, { tags: { provider: 'anthropic' } })
     }
   }

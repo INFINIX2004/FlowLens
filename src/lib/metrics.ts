@@ -1,4 +1,9 @@
 import { prisma } from './prisma'
+import type {
+  ActivityDeployment,
+  ActivityPullRequest,
+  RepositoryWithActivity,
+} from './repository-activity-types'
 
 export const BENCHMARKS = {
   deployFrequency: { elite: 7, high: 3, medium: 1, label: 'deploys/week' },
@@ -42,7 +47,7 @@ export async function getDORAMetrics(orgId: string) {
   }
 
   // Fallback: compute live
-  const repos = await prisma.repository.findMany({
+  const repos: RepositoryWithActivity[] = await prisma.repository.findMany({
     where: { orgId },
     include: {
       pullRequests: { where: { mergedAt: { not: null } }, orderBy: { mergedAt: 'desc' }, take: 100 },
@@ -50,8 +55,8 @@ export async function getDORAMetrics(orgId: string) {
     },
   })
 
-  const allPRs = repos.flatMap(r => r.pullRequests)
-  const allDeploys = repos.flatMap(r => r.deployments)
+  const allPRs: ActivityPullRequest[] = repos.flatMap(r => r.pullRequests)
+  const allDeploys: ActivityDeployment[] = repos.flatMap(r => r.deployments)
   const prsWithCycleTime = allPRs.filter(pr => pr.cycleTimeHrs !== null)
   const avgLeadTime = prsWithCycleTime.length > 0
     ? prsWithCycleTime.reduce((sum, pr) => sum + pr.cycleTimeHrs!, 0) / prsWithCycleTime.length : null

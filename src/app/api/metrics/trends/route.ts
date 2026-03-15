@@ -1,5 +1,10 @@
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import type {
+  ActivityDeployment,
+  ActivityPullRequest,
+  RepositoryWithActivity,
+} from '@/lib/repository-activity-types'
 import { NextResponse } from 'next/server'
 
 type LeadTimeTrendPoint = {
@@ -21,7 +26,7 @@ export async function GET() {
   })
   if (!org) return NextResponse.json({ error: 'No org' }, { status: 404 })
 
-  const repos = await prisma.repository.findMany({
+  const repos: RepositoryWithActivity[] = await prisma.repository.findMany({
     where: { orgId: org.id },
     include: {
       pullRequests: { where: { mergedAt: { not: null } }, orderBy: { mergedAt: 'asc' } },
@@ -29,8 +34,8 @@ export async function GET() {
     },
   })
 
-  const allPRs = repos.flatMap(r => r.pullRequests)
-  const allDeploys = repos.flatMap(r => r.deployments)
+  const allPRs: ActivityPullRequest[] = repos.flatMap(r => r.pullRequests)
+  const allDeploys: ActivityDeployment[] = repos.flatMap(r => r.deployments)
 
   // Lead time trend — group by day
   const leadTimeTrend = allPRs.reduce<LeadTimeTrendPoint[]>((acc, pr) => {
