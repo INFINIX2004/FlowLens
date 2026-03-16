@@ -10,6 +10,7 @@ const links = [
   { href: '/dashboard/retrospective', label: 'AI Retro', icon: '✦' },
   { href: '/dashboard/settings', label: 'Settings', icon: '⚙' },
   { href: '/dashboard/goals', label: 'Goals', icon: '◎' },
+  { href: '/dashboard/jira', label: 'Jira', icon: '◈' },
 ]
 
 export default function SidebarNav() {

@@ -164,3 +164,27 @@ model TeamGoal {
 
   @@unique([orgId])
 }
+
+model JiraConfig {
+  id           String       @id @default(cuid())
+  orgId        String       @unique
+  accessToken  String
+  refreshToken String
+  cloudId      String
+  siteUrl      String
+  createdAt    DateTime     @default(now())
+  org          Organization @relation(fields: [orgId], references: [id])
+}
+
+model JiraIssue {
+  id          String   @id @default(cuid())
+  orgId       String
+  jiraKey     String   @unique  // e.g. "ENG-123"
+  summary     String
+  status      String
+  issueType   String
+  assignee    String?
+  createdAt   DateTime
+  resolvedAt  DateTime?
+  prIds       String[] // linked PullRequest ids
+}
