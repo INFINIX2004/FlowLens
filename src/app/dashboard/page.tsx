@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getGithubRepos } from '@/lib/github'
@@ -6,11 +6,21 @@ import { getDORAMetrics, getPerformanceLevel, BENCHMARKS } from '@/lib/metrics'
 import { decrypt } from '@/lib/encryption'
 import SyncButton from '@/components/sync-button'
 
-export default async function DashboardPage() {
-  const user = await currentUser()
-  if (!user) redirect('/sign-in')
+type GithubRepoSummary = {
+  id: number
+  name: string
+  language: string | null
+  description: string | null
+  stargazers_count: number
+  forks_count: number
+  updated_at: string
+}
 
-  const org = await prisma.organization.findUnique({ where: { clerkOrgId: user.id } })
+export default async function DashboardPage() {
+  const { userId } = await auth()
+  if (!userId) redirect('/sign-in')
+
+  const org = await prisma.organization.findUnique({ where: { clerkOrgId: userId } })
 
   // No GitHub connected → show onboarding
   if (!org?.githubAccessToken) {
@@ -20,7 +30,7 @@ export default async function DashboardPage() {
           <div className="text-center mb-8">
             <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">⚡</div>
             <h1 className="text-xl font-semibold mb-2">Welcome to FlowLens</h1>
-            <p className="text-gray-500 text-sm">Let's get your engineering metrics set up. It takes less than 2 minutes.</p>
+            <p className="text-gray-500 text-sm">Let&apos;s get your engineering metrics set up. It takes less than 2 minutes.</p>
           </div>
           <div className="space-y-3">
             {[
@@ -155,7 +165,7 @@ export default async function DashboardPage() {
       <div>
         <h2 className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">Repositories</h2>
         <div className="grid grid-cols-2 gap-3">
-          {repos.slice(0, 6).map((repo: any) => (
+          {(repos as GithubRepoSummary[]).slice(0, 6).map((repo) => (
             <div key={repo.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] transition-all group">
               <div className="flex items-start justify-between mb-2">
                 <p className="font-medium text-sm group-hover:text-blue-400 transition-colors">{repo.name}</p>

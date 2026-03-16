@@ -1,11 +1,11 @@
-import { currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
 import SidebarNav from '@/components/sidebar-nav'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const user = await currentUser()
-  if (!user) redirect('/sign-in')
+  const { userId } = await auth()
+  if (!userId) redirect('/sign-in')
 
   return (
     <div className="flex min-h-screen bg-[#080B0F] text-white">
@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
         {/* Bottom */}
         <div className="px-4 py-4 border-t border-white/[0.06] flex items-center justify-between">
-         <div className="text-xs text-gray-600 truncate">{user.firstName ?? user.username}</div>
+         <div className="text-xs text-gray-600 truncate">Signed in</div>
         <UserButton signInUrl="/sign-in" />        </div>
       </aside>
 

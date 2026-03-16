@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 
@@ -30,10 +30,10 @@ type PullRequestSizeBucket = {
 }
 
 export default async function PRsPage() {
-  const user = await currentUser()
-  if (!user) redirect('/sign-in')
+  const { userId } = await auth()
+  if (!userId) redirect('/sign-in')
 
-  const org = await prisma.organization.findUnique({ where: { clerkOrgId: user.id } })
+  const org = await prisma.organization.findUnique({ where: { clerkOrgId: userId } })
   if (!org) redirect('/dashboard')
 
   const prs: PullRequestWithRepo[] = await prisma.pullRequest.findMany({
