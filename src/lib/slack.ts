@@ -1,5 +1,6 @@
 import { WebClient } from '@slack/web-api'
 import { prisma } from './prisma'
+import { decrypt } from './encryption'
 
 export async function notifySlack(
   orgId: string,
@@ -10,7 +11,7 @@ export async function notifySlack(
     const config = await prisma.slackConfig.findUnique({ where: { orgId } })
     if (!config || !config.events.includes(event)) return
 
-    const slack = new WebClient(config.botToken)
+    const slack = new WebClient(decrypt(config.botToken))
 
     await slack.chat.postMessage({
       channel: config.channel,
@@ -36,7 +37,7 @@ function buildBlocks(event: string, payload: Record<string, unknown>) {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `✅ *PR Merged:* <${payload.url}|${payload.title}>\nBy *${payload.author}* · Cycle time: *${payload.cycleTime}h*`,
+          text: `*PR Merged:* <${payload.url}|${payload.title}>\nBy *${payload.author}* | Cycle time: *${payload.cycleTime}h*`,
         },
       },
     ]
@@ -48,7 +49,7 @@ function buildBlocks(event: string, payload: Record<string, unknown>) {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `⚠️ *Cycle time exceeded target*\n<${payload.url}|${payload.prTitle}>\nActual: *${payload.actual}h* → Target: *${payload.target}h*`,
+          text: `*Cycle time exceeded target*\n<${payload.url}|${payload.prTitle}>\nActual: *${payload.actual}h* -> Target: *${payload.target}h*`,
         },
       },
     ]
@@ -59,7 +60,7 @@ function buildBlocks(event: string, payload: Record<string, unknown>) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `📊 *FlowLens Daily Digest*\nPRs merged today: *${payload.merged}* | Avg cycle time: *${payload.avgCycleTime}h*`,
+        text: `*FlowLens Daily Digest*\nPRs merged today: *${payload.merged}* | Avg cycle time: *${payload.avgCycleTime}h*`,
       },
     },
   ]

@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { encrypt } from '@/lib/encryption'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -33,8 +34,8 @@ export async function POST(req: Request) {
 
   const config = await prisma.slackConfig.upsert({
     where: { orgId: org.id },
-    update: { botToken: resolvedBotToken, channel, events: events ?? [] },
-    create: { orgId: org.id, botToken: resolvedBotToken, channel, events: events ?? [] },
+    update: { botToken: encrypt(resolvedBotToken), channel, events: events ?? [] },
+    create: { orgId: org.id, botToken: encrypt(resolvedBotToken), channel, events: events ?? [] },
   })
 
   return NextResponse.json({ success: true, channel: config.channel })
