@@ -108,10 +108,14 @@ const worker = new Worker(
               const approvedAt = firstApproval?.submitted_at ? new Date(firstApproval.submitted_at) : null
 
               const cycleTimeHrs = mergedAt ? hrs(createdAt, mergedAt) : null
-              const codingTimeHrs = firstReviewAt ? hrs(createdAt, firstReviewAt) : null
               const reviewWaitHrs = firstReviewAt ? hrs(createdAt, firstReviewAt) : null
               const reviewTimeHrs = firstReviewAt && mergedAt ? hrs(firstReviewAt, mergedAt) : null
               const mergeDelayHrs = approvedAt && mergedAt ? hrs(approvedAt, mergedAt) : null
+
+              // codingTimeHrs requires first commit timestamp which isn't in the PR list response.
+              // We approximate it as the same as reviewWaitHrs for now, which is PR open -> first review.
+              // To do this properly you'd need to call the commits endpoint and get the earliest commit date.
+              const codingTimeHrs = reviewWaitHrs
 
               const dbPR = await prisma.pullRequest.upsert({
                 where: { repoId_githubPrId: { repoId: dbRepo.id, githubPrId: pr.number } },

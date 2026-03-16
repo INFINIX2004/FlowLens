@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "worker": "tsx watch worker/index.ts",
-    "worker:prod": "tsx worker/index.ts"
+    "worker": "tsx --tsconfig tsconfig.worker.json --watch worker/index.ts",
+    "worker:prod": "tsx --tsconfig tsconfig.worker.json worker/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
