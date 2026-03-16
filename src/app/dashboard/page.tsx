@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
   const org = await prisma.organization.findUnique({ where: { clerkOrgId: userId } })
 
-  // No GitHub connected → show onboarding
+  // No GitHub connected -> show onboarding
   if (!org?.githubAccessToken) {
     return (
       <div className="p-8 flex items-center justify-center min-h-screen">
@@ -97,13 +97,12 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href="/api/export/pdf"
-            className="flex items-center gap-2 text-xs border border-white/[0.08] bg-white/[0.05] text-gray-300 hover:bg-white/[0.08] px-3 py-2 rounded-md transition-all"
-          >
-            ↓ Export PDF
-          </a>
           <SyncButton />
+          <a href="/api/export/pdf">
+            <button className="flex items-center gap-2 text-xs border border-white/[0.08] bg-white/[0.05] text-gray-300 hover:bg-white/[0.08] px-3 py-2 rounded-md transition-all">
+              ↓ PDF
+            </button>
+          </a>
         </div>
       </div>
 
@@ -122,25 +121,28 @@ export default async function DashboardPage() {
                 )}
               </div>
               <p className="text-3xl font-bold tracking-tight mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                {hasValue ? m.value : <span className="text-gray-700">—</span>}
+                {hasValue ? m.value : <span className="text-gray-700">-</span>}
               </p>
               <p className="text-xs text-gray-600 mb-3">{hasValue ? m.unit : 'no data yet'}</p>
               {hasValue && (
                 <div className="mt-2">
                   <div className="flex justify-between text-xs text-gray-700 mb-1">
                     <span>vs industry</span>
-                    <span>{m.higherIsBetter ? `elite ≥ ${m.benchmark.elite}` : `elite ≤ ${m.benchmark.elite}`} {m.unit}</span>
+                    <span>{m.higherIsBetter ? `elite >= ${m.benchmark.elite}` : `elite <= ${m.benchmark.elite}`} {m.unit}</span>
                   </div>
                   <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${
-                      level === 'elite' ? 'bg-emerald-500' :
-                      level === 'high' ? 'bg-blue-500' :
-                      level === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                    }`} style={{
-                      width: m.higherIsBetter
-                        ? `${Math.min((m.value as number / m.benchmark.elite) * 100, 100)}%`
-                        : `${Math.min((m.benchmark.elite / (m.value as number)) * 100, 100)}%`
-                    }} />
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        level === 'elite' ? 'bg-emerald-500' :
+                        level === 'high' ? 'bg-blue-500' :
+                        level === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{
+                        width: m.higherIsBetter
+                          ? `${Math.min((m.value as number / m.benchmark.elite) * 100, 100)}%`
+                          : `${Math.min((m.benchmark.elite / (m.value as number)) * 100, 100)}%`,
+                      }}
+                    />
                   </div>
                 </div>
               )}
@@ -169,12 +171,12 @@ export default async function DashboardPage() {
             <div key={repo.id} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:border-white/[0.12] transition-all group">
               <div className="flex items-start justify-between mb-2">
                 <p className="font-medium text-sm group-hover:text-blue-400 transition-colors">{repo.name}</p>
-                <span className="text-xs bg-white/[0.05] text-gray-400 px-2 py-0.5 rounded-full">{repo.language ?? '—'}</span>
+                <span className="text-xs bg-white/[0.05] text-gray-400 px-2 py-0.5 rounded-full">{repo.language ?? '-'}</span>
               </div>
               <p className="text-gray-600 text-xs truncate mb-3">{repo.description ?? 'No description'}</p>
               <div className="flex gap-3 text-xs text-gray-600">
-                <span>⭐ {repo.stargazers_count}</span>
-                <span>🍴 {repo.forks_count}</span>
+                <span>Stars {repo.stargazers_count}</span>
+                <span>Forks {repo.forks_count}</span>
                 <span className="ml-auto">{new Date(repo.updated_at).toLocaleDateString()}</span>
               </div>
             </div>
