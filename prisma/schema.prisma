@@ -15,8 +15,9 @@ model Organization {
   createdAt         DateTime     @default(now())
   repos             Repository[]
   members           Member[]
-  goals             TeamGoal?
   slackConfig       SlackConfig?
+  goals             TeamGoal?
+  jiraConfig        JiraConfig?
 }
 
 model Member {
