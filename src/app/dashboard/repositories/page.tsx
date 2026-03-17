@@ -39,7 +39,7 @@ export default async function RepositoriesPage() {
   })
 
   return (
-    <div className="p-8" style={{ maxWidth: '1400px' }}>
+    <div className="p-4 md:p-8" style={{ maxWidth: '1400px' }}>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -61,7 +61,7 @@ export default async function RepositoriesPage() {
           <p className="text-sm" style={{ color: '#6B5FA0' }}>Click Sync on the Overview page to import your GitHub repos.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {repos.map((repo) => {
             const lang = repo.name
             const lc = langColors[lang] ?? langColors.default
@@ -126,7 +126,7 @@ export default async function RepositoriesPage() {
 
                 {/* Stats Grid */}
                 <div
-                  className="grid grid-cols-4 gap-3 mb-5 p-4 rounded-xl"
+                  className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5 p-4 rounded-xl"
                   style={{ background: '#0E0B1E66', border: '1px solid #2A2450' }}
                 >
                   {[

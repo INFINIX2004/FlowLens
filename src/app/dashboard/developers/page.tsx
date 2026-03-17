@@ -77,7 +77,7 @@ export default async function DevelopersPage() {
   ]
 
   return (
-    <div className="p-8" style={{ maxWidth: '1400px' }}>
+    <div className="p-4 md:p-8" style={{ maxWidth: '1400px' }}>
 
       {/* Header */}
       <div className="mb-8">
@@ -99,7 +99,7 @@ export default async function DevelopersPage() {
       ) : (
         <div className="space-y-4">
           {/* Top Contributors */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {developers.slice(0, 3).map((dev, i) => (
               <div
                 key={dev.login}
@@ -148,102 +148,96 @@ export default async function DevelopersPage() {
             className="rounded-2xl overflow-hidden"
             style={{ border: '1px solid #2A2450' }}
           >
-            {/* Table Header */}
-            <div
-              className="grid gap-4 px-6 py-3"
-              style={{
-                gridTemplateColumns: '2fr 1fr 1fr 1fr 2fr 2fr',
-                background: '#16122A',
-                borderBottom: '1px solid #2A2450',
-              }}
-            >
-              {['Developer', 'PRs', 'Reviews', 'Avg Cycle', 'PR Activity', 'Review Load'].map(h => (
-                <p key={h} className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#4B4272' }}>{h}</p>
+            {/* Mobile card list */}
+            <div className="md:hidden">
+              {developers.map((dev, i) => (
+                <div key={dev.login} className="flex items-center gap-3 px-4 py-3"
+                  style={{ borderBottom: '1px solid #2A245044' }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                    style={{ background: avatarColors[i % avatarColors.length] }}>
+                    {dev.login.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium" style={{ color: '#F0EEFF' }}>{dev.login}</p>
+                    <p className="text-xs" style={{ color: '#6B5FA0' }}>{dev.prs} PRs · {dev.reviews} reviews</p>
+                  </div>
+                  <span className="text-xs font-mono" style={{
+                    color: dev.avgCycleTime === null ? '#4B4272'
+                      : dev.avgCycleTime < 24 ? '#10B981'
+                      : dev.avgCycleTime < 48 ? '#F59E0B' : '#F87171'
+                  }}>
+                    {dev.avgCycleTime ? `${dev.avgCycleTime.toFixed(0)}h` : '—'}
+                  </span>
+                </div>
               ))}
             </div>
 
-            {/* Table Rows */}
-            {developers.map((dev, i) => (
+            {/* Desktop table */}
+            <div className="hidden md:block">
+              {/* Table Header */}
               <div
-                key={dev.login}
-                className="grid gap-4 px-6 py-4 transition-all"
+                className="grid gap-4 px-6 py-3"
                 style={{
                   gridTemplateColumns: '2fr 1fr 1fr 1fr 2fr 2fr',
-                  borderBottom: '1px solid #2A245066',
-                  background: i % 2 === 0 ? 'transparent' : '#16122A44',
+                  background: '#16122A',
+                  borderBottom: '1px solid #2A2450',
                 }}
               >
-                {/* Name */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                    style={{ background: avatarColors[i % avatarColors.length] }}
-                  >
-                    {dev.login.charAt(0).toUpperCase()}
-                  </div>
-                  <p className="text-sm font-medium truncate" style={{ color: '#F0EEFF' }}>{dev.login}</p>
-                </div>
-
-                {/* PRs */}
-                <p className="text-sm font-bold self-center" style={{ color: '#C4B8FF', fontFamily: 'monospace' }}>
-                  {dev.prs}
-                </p>
-
-                {/* Reviews */}
-                <p className="text-sm font-bold self-center" style={{ color: '#C4B8FF', fontFamily: 'monospace' }}>
-                  {dev.reviews}
-                </p>
-
-                {/* Avg Cycle */}
-                <p className="text-sm font-bold self-center" style={{
-                  fontFamily: 'monospace',
-                  color: dev.avgCycleTime === null ? '#4B4272'
-                    : dev.avgCycleTime < 24 ? '#10B981'
-                    : dev.avgCycleTime < 48 ? '#F59E0B'
-                    : '#F87171',
-                }}>
-                  {dev.avgCycleTime ? `${dev.avgCycleTime.toFixed(0)}h` : '—'}
-                </p>
-
-                {/* PR Activity Bar */}
-                <div className="self-center">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="flex-1 h-1.5 rounded-full overflow-hidden"
-                      style={{ background: '#2A2450' }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${(dev.prs / maxPRs) * 100}%`,
-                          background: 'linear-gradient(90deg, #7C3AED, #EC4899)',
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs w-6 text-right" style={{ color: '#6B5FA0' }}>{dev.prs}</span>
-                  </div>
-                </div>
-
-                {/* Review Load Bar */}
-                <div className="self-center">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="flex-1 h-1.5 rounded-full overflow-hidden"
-                      style={{ background: '#2A2450' }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${(dev.reviews / maxReviews) * 100}%`,
-                          background: 'linear-gradient(90deg, #06B6D4, #10B981)',
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs w-6 text-right" style={{ color: '#6B5FA0' }}>{dev.reviews}</span>
-                  </div>
-                </div>
+                {['Developer', 'PRs', 'Reviews', 'Avg Cycle', 'PR Activity', 'Review Load'].map(h => (
+                  <p key={h} className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#4B4272' }}>{h}</p>
+                ))}
               </div>
-            ))}
+
+              {/* Table Rows */}
+              {developers.map((dev, i) => (
+                <div
+                  key={dev.login}
+                  className="grid gap-4 px-6 py-4 transition-all"
+                  style={{
+                    gridTemplateColumns: '2fr 1fr 1fr 1fr 2fr 2fr',
+                    borderBottom: '1px solid #2A245066',
+                    background: i % 2 === 0 ? 'transparent' : '#16122A44',
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                      style={{ background: avatarColors[i % avatarColors.length] }}
+                    >
+                      {dev.login.charAt(0).toUpperCase()}
+                    </div>
+                    <p className="text-sm font-medium truncate" style={{ color: '#F0EEFF' }}>{dev.login}</p>
+                  </div>
+                  <p className="text-sm font-bold self-center" style={{ color: '#C4B8FF', fontFamily: 'monospace' }}>{dev.prs}</p>
+                  <p className="text-sm font-bold self-center" style={{ color: '#C4B8FF', fontFamily: 'monospace' }}>{dev.reviews}</p>
+                  <p className="text-sm font-bold self-center" style={{
+                    fontFamily: 'monospace',
+                    color: dev.avgCycleTime === null ? '#4B4272'
+                      : dev.avgCycleTime < 24 ? '#10B981'
+                      : dev.avgCycleTime < 48 ? '#F59E0B'
+                      : '#F87171',
+                  }}>
+                    {dev.avgCycleTime ? `${dev.avgCycleTime.toFixed(0)}h` : '—'}
+                  </p>
+                  <div className="self-center">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#2A2450' }}>
+                        <div className="h-full rounded-full" style={{ width: `${(dev.prs / maxPRs) * 100}%`, background: 'linear-gradient(90deg, #7C3AED, #EC4899)' }} />
+                      </div>
+                      <span className="text-xs w-6 text-right" style={{ color: '#6B5FA0' }}>{dev.prs}</span>
+                    </div>
+                  </div>
+                  <div className="self-center">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#2A2450' }}>
+                        <div className="h-full rounded-full" style={{ width: `${(dev.reviews / maxReviews) * 100}%`, background: 'linear-gradient(90deg, #06B6D4, #10B981)' }} />
+                      </div>
+                      <span className="text-xs w-6 text-right" style={{ color: '#6B5FA0' }}>{dev.reviews}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
