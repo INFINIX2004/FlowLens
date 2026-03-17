@@ -12,10 +12,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <aside className="w-56 border-r border-white/[0.06] flex flex-col fixed h-full z-10">
         
         {/* Logo */}
-        <div className="px-5 py-5 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-blue-500 rounded-md flex items-center justify-center text-sm">⚡</div>
-            <span className="font-semibold tracking-tight text-white">FlowLens</span>
+        <div className="px-5 py-5" style={{ borderBottom: '1px solid #2A2450' }}>
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="FlowLens"
+              className="w-8 h-8 rounded-lg object-contain"
+            />
+            <div>
+              <p className="font-bold text-sm" style={{ color: '#F0EEFF' }}>FlowLens</p>
+              <p className="text-[10px]" style={{ color: '#6B5FA0' }}>Engineering Analytics</p>
+            </div>
           </div>
         </div>
 
