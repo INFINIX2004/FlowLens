@@ -18,15 +18,36 @@ model Organization {
   slackConfig       SlackConfig?
   goals             TeamGoal?
   jiraConfig        JiraConfig?
+  invites           Invite[]
 }
 
 model Member {
   id          String       @id @default(cuid())
   clerkUserId String
   orgId       String
-  role        String       @default("member")
+  role        String       @default("member")  // "owner" | "admin" | "member"
+  name        String?
+  email       String?
   createdAt   DateTime     @default(now())
   org         Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([clerkUserId, orgId])
+  @@index([orgId])
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  orgId     String
+  email     String
+  role      String   @default("member")
+  token     String   @unique @default(cuid())
+  accepted  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  org       Organization @relation(fields: [orgId], references: [id])
+
+  @@index([orgId])
+  @@index([token])
 }
 
 model Repository {
