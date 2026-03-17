@@ -92,7 +92,7 @@ export default async function DashboardPage() {
     <div className="p-8" style={{ maxWidth: '1400px' }}>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#F0EEFF' }}>Overview</h1>
           <p className="text-sm mt-1" style={{ color: '#6B5FA0' }}>
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: 'Total PRs Tracked', value: totalPRs, icon: '⌥', color: '#7C3AED' },
           { label: 'Open PRs', value: openPRs, icon: '◐', color: '#F59E0B' },
@@ -156,7 +156,7 @@ export default async function DashboardPage() {
           <span className="text-xs" style={{ color: '#4B4272' }}>Industry benchmarks</span>
         </div>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {doraCards.map((m) => {
             const hasValue = m.value !== null
             const level = hasValue ? getPerformanceLevel(m.key, m.value as number) : null
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
           <span className="text-xs" style={{ color: '#4B4272' }}>{repos.length} connected</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {repos.map((repo) => (
             <div
               key={repo.id}
