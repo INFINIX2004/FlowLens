@@ -15,6 +15,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        <head>
+        <link rel="icon" href="/logo.svg" />
+        </head>
         <body style={{ background: '#0E0B1E', color: '#F0EEFF' }}>
           {children}
         </body>
