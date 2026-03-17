@@ -13,6 +13,7 @@ const links = [
   { href: '/dashboard/goals', label: 'Goals', icon: '◎', group: 'insights' },
   { href: '/dashboard/jira', label: 'Integrations', icon: '⬢', group: 'config' },
   { href: '/dashboard/settings', label: 'Settings', icon: '⚙', group: 'config' },
+  { href: '/dashboard/team', label: 'Team', icon: '◉', group: 'config' },
 ]
 
 const groups = [
