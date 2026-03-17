@@ -56,7 +56,7 @@ export default async function PRsPage() {
   const avatarColors = ['#7C3AED', '#06B6D4', '#10B981', '#F59E0B', '#EC4899']
 
   return (
-    <div className="p-8" style={{ maxWidth: '1400px' }}>
+    <div className="p-4 md:p-8" style={{ maxWidth: '1400px' }}>
 
       {/* Header */}
       <div className="mb-8">
@@ -65,7 +65,7 @@ export default async function PRsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Merged PRs', value: prs.length, icon: '⌥', color: '#7C3AED' },
           { label: 'Avg Cycle Time', value: avgCycleTime ? `${avgCycleTime}h` : '—', icon: '⏱', color: '#06B6D4' },
@@ -103,7 +103,7 @@ export default async function PRsPage() {
         <p className="text-xs mb-5" style={{ color: '#6B5FA0' }}>
           Average time spent in each stage across all merged PRs
         </p>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Coding Time', value: avgCodingTime, desc: 'First commit → PR opened', color: '#7C3AED', bg: '#7C3AED22', border: '#7C3AED33' },
             { label: 'Review Wait', value: avgReviewWait, desc: 'PR opened → first review', color: '#F59E0B', bg: '#F59E0B22', border: '#F59E0B33' },
@@ -125,7 +125,7 @@ export default async function PRsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Top Reviewers */}
         <div
           className="rounded-2xl p-5"
@@ -212,72 +212,111 @@ export default async function PRsPage() {
         className="rounded-2xl overflow-hidden"
         style={{ border: '1px solid #2A2450' }}
       >
-        <div
-          className="grid grid-cols-12 gap-4 px-6 py-3"
-          style={{ background: '#16122A', borderBottom: '1px solid #2A2450' }}
-        >
-          {[
-            { label: 'Title', span: 'col-span-4' },
-            { label: 'Author', span: 'col-span-2' },
-            { label: 'Repo', span: 'col-span-2' },
-            { label: '+/−', span: 'col-span-2 text-right' },
-            { label: 'Cycle Time', span: 'col-span-2 text-right' },
-          ].map((h) => (
-            <div
-              key={h.label}
-              className={`text-xs font-semibold uppercase tracking-widest ${h.span}`}
-              style={{ color: '#4B4272' }}
-            >
-              {h.label}
-            </div>
-          ))}
-        </div>
-
         {prs.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm" style={{ color: '#4B4272' }}>
               No merged PRs found. Sync your GitHub data.
             </p>
           </div>
-        ) : prs.map((pr, i) => (
-          <div
-            key={pr.id}
-            className="grid grid-cols-12 gap-4 px-6 py-4 transition-all"
-            style={{
-              borderBottom: '1px solid #2A245044',
-              background: i % 2 === 0 ? 'transparent' : '#16122A44',
-            }}
-          >
-            <div className="col-span-4 text-sm truncate font-medium" style={{ color: '#E0D9FF' }}>
-              {pr.title}
+        ) : (
+          <>
+            {/* Mobile PR list */}
+            <div className="md:hidden">
+              {prs.map((pr) => (
+                <div key={pr.id} className="px-4 py-4" style={{ borderBottom: '1px solid #2A245044' }}>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="text-sm font-medium" style={{ color: '#E0D9FF' }}>{pr.title}</p>
+                    <span
+                      className="text-xs font-mono px-2 py-1 rounded-lg shrink-0"
+                      style={
+                        (pr.cycleTimeHrs ?? 0) < 24
+                          ? { background: '#10B98122', color: '#10B981' }
+                          : (pr.cycleTimeHrs ?? 0) < 48
+                          ? { background: '#F59E0B22', color: '#F59E0B' }
+                          : { background: '#F8717122', color: '#F87171' }
+                      }
+                    >
+                      {pr.cycleTimeHrs ? `${Math.round(pr.cycleTimeHrs)}h` : '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs" style={{ color: '#8B7EC8' }}>{pr.authorLogin}</span>
+                    <span className="text-xs" style={{ color: '#4B4272' }}>·</span>
+                    <span className="text-xs" style={{ color: '#8B7EC8' }}>{pr.repo.name}</span>
+                    <span className="text-xs ml-auto font-mono">
+                      <span style={{ color: '#10B981' }}>+{pr.additions}</span>
+                      <span style={{ color: '#4B4272' }}>/</span>
+                      <span style={{ color: '#F87171' }}>-{pr.deletions}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="col-span-2 text-sm truncate" style={{ color: '#8B7EC8' }}>
-              {pr.authorLogin}
-            </div>
-            <div className="col-span-2 text-sm truncate" style={{ color: '#8B7EC8' }}>
-              {pr.repo.name}
-            </div>
-            <div className="col-span-2 text-right text-xs font-mono">
-              <span style={{ color: '#10B981' }}>+{pr.additions}</span>
-              <span style={{ color: '#4B4272', margin: '0 2px' }}>/</span>
-              <span style={{ color: '#F87171' }}>-{pr.deletions}</span>
-            </div>
-            <div className="col-span-2 text-right">
-              <span
-                className="text-xs font-mono px-2 py-1 rounded-lg"
-                style={
-                  (pr.cycleTimeHrs ?? 0) < 24
-                    ? { background: '#10B98122', color: '#10B981' }
-                    : (pr.cycleTimeHrs ?? 0) < 48
-                    ? { background: '#F59E0B22', color: '#F59E0B' }
-                    : { background: '#F8717122', color: '#F87171' }
-                }
+
+            {/* Desktop table */}
+            <div className="hidden md:block">
+              <div
+                className="grid grid-cols-12 gap-4 px-6 py-3"
+                style={{ background: '#16122A', borderBottom: '1px solid #2A2450' }}
               >
-                {pr.cycleTimeHrs ? `${Math.round(pr.cycleTimeHrs)}h` : '—'}
-              </span>
+                {[
+                  { label: 'Title', span: 'col-span-4' },
+                  { label: 'Author', span: 'col-span-2' },
+                  { label: 'Repo', span: 'col-span-2' },
+                  { label: '+/−', span: 'col-span-2 text-right' },
+                  { label: 'Cycle Time', span: 'col-span-2 text-right' },
+                ].map((h) => (
+                  <div
+                    key={h.label}
+                    className={`text-xs font-semibold uppercase tracking-widest ${h.span}`}
+                    style={{ color: '#4B4272' }}
+                  >
+                    {h.label}
+                  </div>
+                ))}
+              </div>
+              {prs.map((pr, i) => (
+                <div
+                  key={pr.id}
+                  className="grid grid-cols-12 gap-4 px-6 py-4 transition-all"
+                  style={{
+                    borderBottom: '1px solid #2A245044',
+                    background: i % 2 === 0 ? 'transparent' : '#16122A44',
+                  }}
+                >
+                  <div className="col-span-4 text-sm truncate font-medium" style={{ color: '#E0D9FF' }}>
+                    {pr.title}
+                  </div>
+                  <div className="col-span-2 text-sm truncate" style={{ color: '#8B7EC8' }}>
+                    {pr.authorLogin}
+                  </div>
+                  <div className="col-span-2 text-sm truncate" style={{ color: '#8B7EC8' }}>
+                    {pr.repo.name}
+                  </div>
+                  <div className="col-span-2 text-right text-xs font-mono">
+                    <span style={{ color: '#10B981' }}>+{pr.additions}</span>
+                    <span style={{ color: '#4B4272', margin: '0 2px' }}>/</span>
+                    <span style={{ color: '#F87171' }}>-{pr.deletions}</span>
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <span
+                      className="text-xs font-mono px-2 py-1 rounded-lg"
+                      style={
+                        (pr.cycleTimeHrs ?? 0) < 24
+                          ? { background: '#10B98122', color: '#10B981' }
+                          : (pr.cycleTimeHrs ?? 0) < 48
+                          ? { background: '#F59E0B22', color: '#F59E0B' }
+                          : { background: '#F8717122', color: '#F87171' }
+                      }
+                    >
+                      {pr.cycleTimeHrs ? `${Math.round(pr.cycleTimeHrs)}h` : '—'}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        ))}
+          </>
+        )}
       </div>
     </div>
   )
