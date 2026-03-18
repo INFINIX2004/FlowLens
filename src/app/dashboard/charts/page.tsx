@@ -38,12 +38,12 @@ export default function ChartsPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: '#F0EEFF' }}>Trends</h1>
           <p className="text-sm mt-1" style={{ color: '#6B5FA0' }}>Loading metrics...</p>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div
               key={i}
@@ -172,7 +172,7 @@ export default function ChartsPage() {
   ]
 
   return (
-    <div className="p-8" style={{ maxWidth: '1400px' }}>
+    <div className="p-4 md:p-8" style={{ maxWidth: '1400px' }}>
 
       {/* Header */}
       <div className="mb-8">
@@ -183,7 +183,7 @@ export default function ChartsPage() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {charts.map((c) => (
           <div
             key={c.title}
