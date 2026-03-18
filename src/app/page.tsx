@@ -55,7 +55,7 @@ export default async function HomePage() {
         </div>
 
         {/* Headline */}
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
+        <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
           Engineering metrics
           <br />
           <span style={{
@@ -163,7 +163,7 @@ export default async function HomePage() {
 
       {/* Stats Bar */}
       <section style={{ borderTop: '1px solid #2A2450', borderBottom: '1px solid #2A2450' }}>
-        <div className="max-w-6xl mx-auto px-8 py-12 grid grid-cols-4 gap-8 text-center">
+        <div className="max-w-6xl mx-auto px-8 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
             { value: '2 min', label: 'Setup time' },
             { value: '10+', label: 'Repos supported' },
@@ -190,7 +190,7 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
             { icon: '▦', title: 'DORA Metrics', desc: 'Track deployment frequency, lead time, failure rate, and MTTR with industry benchmarks built in.', color: '#7C3AED' },
             { icon: '⌥', title: 'PR Analytics', desc: 'See cycle times, review bottlenecks, and PR size analysis across all your repos in one place.', color: '#06B6D4' },
@@ -225,7 +225,7 @@ export default async function HomePage() {
           <p className="text-lg" style={{ color: '#8B7EC8' }}>Start free. Upgrade when your team grows.</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
               name: 'Free',
