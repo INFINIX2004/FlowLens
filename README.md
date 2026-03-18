@@ -353,10 +353,9 @@ npm run lint             # Run ESLint
 
 ---
 
-## License
+## 🙌 Author
 
-Private — all rights reserved.
+Built by **[INFINIX2004](https://github.com/INFINIX2004)**
 
----
+For learning, experimentation, and real-world system design practice.
 
-*Built for engineering teams who ship* ⚡
