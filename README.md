@@ -2,7 +2,7 @@
 
 **Engineering Analytics Platform** — Connect GitHub. Track DORA metrics. Ship faster.
 
-> 🚀 Live: [flowlens-production.up.railway.app](https://flowlens-production.up.railway.app)
+> � See screenshots and setup instructions below. Live demo has concluded, but you can run FlowLens locally.
 
 ---
 
@@ -56,7 +56,32 @@ Each user connects their own GitHub account. FlowLens syncs their repositories, 
 
 ---
 
-## Project Structure
+## Demo Gallery
+
+### Landing Page
+![Landing Page 1](./demo/landing-page1.png)
+![Landing Page 2](./demo/landing-page2.png)
+![Landing Page 3](./demo/landing-page3.png)
+
+### Dashboard & Analytics
+![Dashboard Overview](./demo/overview.png)
+![DORA Trends](./demo/Trends.png)
+![Developer Analytics](./demo/developers.png)
+![Pull Request Analytics 1](./demo/PR-1.png)
+![Pull Request Analytics 2](./demo/PR-2.png)
+
+### Team & Repository Management
+![Repository List](./demo/repo-list.png)
+![Team Management](./demo/TEAM.png)
+![Team Goals](./demo/team-goals.png)
+
+### Integrations & Settings
+![Integrations](./demo/integrations.png)
+![AI Insights](./demo/ai-insights.png)
+![Settings](./demo/settings.png)
+![Sign In & Up](./demo/sign-in&up.png)
+
+---
 
 ```
 src/
@@ -205,14 +230,14 @@ http://localhost:3000
 Create a GitHub OAuth App at [github.com/settings/developers](https://github.com/settings/developers):
 
 - **Callback URL (local):** `http://localhost:3000/api/github/callback`
-- **Callback URL (production):** `https://flowlens-production.up.railway.app/api/github/callback`
+- **Callback URL (production):** `https://your-deployment-url.com/api/github/callback`
 - Copy Client ID and Secret to env vars
 
 ### GitHub Webhook Setup
 
 In each repo you want to track, create a webhook:
 
-- **Payload URL:** `https://flowlens-production.up.railway.app/api/github/webhook`
+- **Payload URL:** `https://your-deployment-url.com/api/github/webhook`
 - **Content type:** `application/json`
 - **Secret:** same value as `GITHUB_WEBHOOK_SECRET`
 - **Events:** `push`, `pull_request`, `pull_request_review`, `workflow_run`, `deployment`, `release`
@@ -226,7 +251,7 @@ In each repo you want to track, create a webhook:
 Create an Atlassian OAuth 2.0 app at [developer.atlassian.com/console/myapps](https://developer.atlassian.com/console/myapps):
 
 1. Add scopes: `read:jira-work` and `read:jira-user`
-2. Add callback URL: `https://flowlens-production.up.railway.app/api/jira/callback`
+2. Add callback URL: `https://your-deployment-url.com/api/jira/callback`
 3. Copy Client ID and Secret to Railway env vars
 4. Users connect Jira from the Integrations page in the dashboard
 
@@ -244,16 +269,22 @@ Slack tokens are stored per-org in the database — no global env var needed:
 
 ---
 
-## Railway Deployment
+## Deployment
 
-FlowLens deploys as two services using the `Procfile`:
+FlowLens can be deployed to any cloud platform supporting Node.js. Example deployment configurations below.
+
+### Railway Deployment (Optional)
+
+FlowLens was originally deployed on Railway with two services using the `Procfile`:
 
 ```
 web:    npm run start
 worker: npm run worker:prod
 ```
 
-### Required Railway Variables
+**Note:** The original Railway deployment is no longer active. To deploy your own instance:
+
+**Required Railway Environment Variables**
 
 ```
 DATABASE_URL, REDIS_URL, ENCRYPTION_KEY
@@ -262,11 +293,19 @@ GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_WEBHOOK_SECRET
 NEXT_PUBLIC_APP_URL, CRON_SECRET
 ```
 
-### Deployment Notes
+**Deployment Notes**
 
 - `prisma` is in `dependencies` (not `devDependencies`) so Railway can run `prisma generate`
 - `postinstall` script runs `prisma generate` automatically
 - The webhook and Jira callback routes are exempt from Clerk auth in `src/proxy.ts`
+
+### Alternative Deployment Platforms
+
+FlowLens can also be deployed to:
+- **Vercel** (frontend only) + separate Node.js host for worker
+- **AWS** (Elastic Beanstalk, Lambda + RDS)
+- **Google Cloud Run** (containerized deployment)
+- **Self-hosted** (VPS, Docker)
 
 ---
 
